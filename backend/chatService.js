@@ -85,6 +85,11 @@ function cleanText(value) {
   return typeof value === 'string' ? value.trim() : ''
 }
 
+// Models sometimes slip letters from another script into a button label.
+function isReadable(text) {
+  return /^[\p{Script=Latin}\p{Script=Arabic}\p{N}\p{P}\p{Zs}]+$/u.test(text)
+}
+
 // Both providers pass through here, so the client always gets the same shape.
 function normalizeReply(raw, hasImage) {
   const reply = cleanText(raw?.reply)
@@ -99,7 +104,7 @@ function normalizeReply(raw, hasImage) {
     next_step: cleanText(raw.next_step),
     speak_text: cleanText(raw.speak_text),
     screen_summary: hasImage ? cleanText(raw.screen_summary) : '',
-    suggested_replies: cleanList(raw.suggested_replies, MAX_SUGGESTED_REPLIES),
+    suggested_replies: cleanList(raw.suggested_replies).filter(isReadable).slice(0, MAX_SUGGESTED_REPLIES),
   }
 }
 
