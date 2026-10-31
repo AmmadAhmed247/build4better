@@ -12,8 +12,9 @@ const TEMPERATURE = 0.2
 const MAX_HISTORY = 10
 const MAX_TEXT = 4000
 const MAX_LIST_ITEMS = 6
+const MAX_SUGGESTED_REPLIES = 3
 
-const KINDS = ['answer', 'scam_check']
+const KINDS = ['answer', 'scam_check', 'out_of_scope']
 const RISKS = ['danger', 'careful', 'none']
 
 const REPLY_SCHEMA = {
@@ -24,8 +25,11 @@ const REPLY_SCHEMA = {
     reply: { type: Type.STRING },
     warning_signs: { type: Type.ARRAY, items: { type: Type.STRING } },
     next_step: { type: Type.STRING },
+    speak_text: { type: Type.STRING },
+    screen_summary: { type: Type.STRING },
+    suggested_replies: { type: Type.ARRAY, items: { type: Type.STRING } },
   },
-  required: ['kind', 'risk', 'reply', 'warning_signs', 'next_step'],
+  required: ['kind', 'risk', 'reply', 'warning_signs', 'next_step', 'speak_text', 'screen_summary', 'suggested_replies'],
 }
 
 const JSON_RULE = `Return only one JSON object with exactly these keys: ${REPLY_SCHEMA.required.join(', ')}.`
@@ -37,6 +41,9 @@ const FRIENDLY_FALLBACK = {
   reply: 'Maaf kijiye, mujhe jawab dene mein mushkil hui. Baraye meherbani apna sawal dobara bhejein.',
   warning_signs: [],
   next_step: '',
+  speak_text: 'معاف کیجیے، مجھے جواب دینے میں مشکل ہوئی۔ براہ کرم اپنا سوال دوبارہ بھیجیں۔',
+  screen_summary: '',
+  suggested_replies: [],
 }
 
 function readKeys(name) {
@@ -66,12 +73,12 @@ function hasChatProvider() {
   return geminiClients.length > 0 || (groqClients.length > 0 && Boolean(groqTextModel))
 }
 
-function cleanList(value) {
+function cleanList(value, limit = MAX_LIST_ITEMS) {
   if (!Array.isArray(value)) return []
   return value
     .filter((item) => typeof item === 'string' && item.trim())
     .map((item) => item.trim())
-    .slice(0, MAX_LIST_ITEMS)
+    .slice(0, limit)
 }
 
 function cleanText(value) {
@@ -79,7 +86,7 @@ function cleanText(value) {
 }
 
 // Both providers pass through here, so the client always gets the same shape.
-function normalizeReply(raw) {
+function normalizeReply(raw, hasImage) {
   const reply = cleanText(raw?.reply)
   if (!reply) throw new SyntaxError('reply is empty')
   const kind = KINDS.includes(raw.kind) ? raw.kind : 'answer'
@@ -90,11 +97,14 @@ function normalizeReply(raw) {
     reply,
     warning_signs: isScamCheck ? cleanList(raw.warning_signs) : [],
     next_step: cleanText(raw.next_step),
+    speak_text: cleanText(raw.speak_text),
+    screen_summary: hasImage ? cleanText(raw.screen_summary) : '',
+    suggested_replies: cleanList(raw.suggested_replies, MAX_SUGGESTED_REPLIES),
   }
 }
 
-function parseReply(text) {
-  return normalizeReply(JSON.parse(text))
+function parseReply(text, hasImage) {
+  return normalizeReply(JSON.parse(text), hasImage)
 }
 
 function cleanTurns(history, message) {
@@ -164,7 +174,7 @@ async function askGemini(request, models, outcome) {
             responseSchema: REPLY_SCHEMA,
           },
         })
-        const answer = parseReply(response.text)
+        const answer = parseReply(response.text, Boolean(request.image))
         console.log(`Chat answered by gemini key #${index + 1} (${model})`)
         return answer
       } catch (err) {
@@ -205,7 +215,7 @@ async function askGroq(request, outcome) {
           },
           { timeout },
         )
-        const answer = parseReply(response.choices[0]?.message?.content ?? '')
+        const answer = parseReply(response.choices[0]?.message?.content ?? '', Boolean(request.image))
         console.log(`Chat answered by groq key #${index + 1} (${model})`)
         return answer
       } catch (err) {

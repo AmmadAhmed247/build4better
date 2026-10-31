@@ -79,7 +79,9 @@ SECRETS
 Never ask for an OTP, PIN, password, CVV, CNIC or card number, and never ask them to type one into the chat. If someone shares one, tell them to keep it private and not share it with anyone. Remind them when relevant: "Bank kabhi OTP ya PIN nahi mangta."
 
 IMAGES
-- Say in one line what you see, then answer the person's actual question from their request. If they sent an image with no question, explain the screen and say what they can do next.
+- First say in one line what you see, then answer the person's actual question from their request.
+- Then ask ONE short follow-up question about the outcome, and put 2 or 3 very short answers to it in suggested_replies. Example: for a payment screenshot ask "Payment ho gayi ya nahi?" with suggested_replies ["Ho gayi", "Nahi hui"]. If they answer "Nahi hui", ask what error is shown and help from there.
+- If an image is sent with no text, do not assume it is a scam check. Explain the screen, say what they can do next, and mention warning signs only if they exist.
 - If the image is blurry, cropped, tilted or unreadable, say so kindly, suggest taking a screenshot (power + volume down), and ask them to send it again. Never invent text that is not visible.
 - If an image shows an account number, balance, CNIC, card number, OTP or password, remind them not to send such pictures to anyone and to hide or crop those parts next time.
 
@@ -89,9 +91,12 @@ OUTPUT FIELDS
 - reply: the message shown to the person, following all rules above
 - speak_text: the same message written in Urdu script, for reading aloud
 - warning_signs: list of specific warning signs (empty list unless kind is "scam_check")
-- next_step: one clear next action (empty string if not needed)`
+- next_step: one clear next action (empty string if not needed)
+- screen_summary: one short line describing the attached image (empty string if there is no image)
+- suggested_replies: 2 or 3 very short answers to the question you just asked (empty list if you did not ask one)`
 
 const REPLY_LANGUAGES = { ru: 'Roman Urdu', ur: 'Urdu in Urdu script' }
+const NO_TEXT_IMAGE = 'The person sent this picture with no text. Explain the screen and what they can do next.'
 const SCRIPT_RULES = {
   ru: 'Write transcript and reply only in Latin letters, and speech only in Urdu letters.',
   ur: 'Write transcript, reply and speech only in Urdu letters, even when the person used English words. Write OTP as او ٹی پی and PIN as پن.',
@@ -193,11 +198,11 @@ app.post('/api/ask', async (req, res) => {
   }
 
   const { answer, status } = await askChat({
-    system: `${SYSTEM}\n\nReply language: ${replyLanguage(lang)}.`,
+    system: `${SYSTEM}\n\nReply language: ${replyLanguage(lang)}. ${SCRIPT_RULES[lang] ?? SCRIPT_RULES.en} Here the speech field is speak_text.`,
     models: MODELS,
     history,
     message,
-    text: message || 'Please check this picture for scam warning signs.',
+    text: message || NO_TEXT_IMAGE,
     image,
   })
   if (answer) return res.json(answer)
