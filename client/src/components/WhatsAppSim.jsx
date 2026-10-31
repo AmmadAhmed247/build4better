@@ -340,7 +340,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
   const notHere = () => setMistake({ line: LINE.notHere, target: 'wa-attach' })
 
   return (
-    <main className="min-h-0 flex-1 overflow-y-auto bg-stone-200 p-2 pb-32 text-stone-900 lg:p-4 lg:pb-4">
+    <main className="min-h-0 flex-1 overflow-y-auto p-2 pb-32 text-stone-900 lg:p-4 lg:pb-4">
       <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[1fr_280px]">
         <div className="relative flex h-[calc(100dvh-9.5rem)] min-h-[440px] flex-col overflow-hidden rounded-2xl border border-stone-400 bg-white shadow-lg lg:h-[calc(100dvh-2rem)]">
           {!open && phone && (

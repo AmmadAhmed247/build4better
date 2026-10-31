@@ -180,6 +180,7 @@ export const LESSONS = {
     brand: 'mz',
     title: { en: 'Meezan: Fund transfer', ru: 'Meezan: Fund transfer' },
     blurb: { en: 'Send to another bank by IBAN', ru: 'IBAN se doosre bank mein' },
+    logo: '/brands/meezan.png',
     brief: [{ en: 'Send Rs 2000 by IBAN', ru: 'IBAN se Rs 2000 bhejein' }, IBAN_BRIEF[1], SEND_BRIEF[2]],
     steps: meezanSteps(),
   },
@@ -364,7 +365,17 @@ export const LESSONS = {
   },
 }
 
-export const PRACTICE = ['ep-send', 'ep-ke', 'ep-gas', 'ep-water', 'ep-invoice', 'ep-iban', 'ep-raast', 'jc-send', 'mz-iban']
+export const PROVIDERS = [
+  {
+    id: 'ep',
+    name: 'easypaisa',
+    logo: '/brands/easypaisa.png',
+    lessons: ['ep-send', 'ep-gas', 'ep-water', 'ep-invoice', 'ep-iban', 'ep-raast'],
+  },
+  { id: 'jc', name: 'JazzCash', logo: '/brands/jazzcash.png', lessons: ['jc-send'] },
+  { id: 'mz', name: 'Meezan Bank', logo: '/brands/meezan.png', lessons: ['mz-iban'] },
+  { id: 'ke', name: 'K-Electric', logo: '/brands/ke.png', lessons: ['ep-ke'] },
+]
 export const TIPS = ['video', 'screenshot', 'google', 'ai']
 
 // Each part marked with a flag number gets highlighted after the person falls for the scam.
@@ -411,9 +422,23 @@ export const UI = {
   tip: { en: 'Tip', ru: 'Tip' },
   bankBox: { en: "Bank Simulator", ru: "Bank Simulator" },
   bankBoxLead: { en: "Send money, pay bills and top up with a helper", ru: "Madadgaar ke saath paise, bills aur top-up" },
+  stopVoice: { en: 'Stop voice', ru: 'Awaaz band karein' },
+  formsBox: { en: 'Government Forms', ru: 'Sarkari Form' },
+  scamBox: { en: 'Scam Detector', ru: 'Scam Detector' },
+  featureHelp: {
+    lessons: { en: 'Learn easypaisa, JazzCash, Meezan and bills', ru: 'easypaisa, JazzCash, Meezan aur bills seekhein' },
+    forms: { en: 'Learn to fill pension and other forms', ru: 'Pension aur doosre form bharna seekhein' },
+    scam: { en: 'Check if a message is safe', ru: 'Dekhein message theek hai ya nahi' },
+    whatsapp: { en: 'Learn messages, voice notes and calls', ru: 'Message, voice note aur call seekhein' },
+    video: { en: 'Answer a call and show your face', ru: 'Call uthayein aur chehra dikhayein' },
+    screenshot: { en: 'Save a picture of your screen', ru: 'Screen ki tasveer save karein' },
+    google: { en: 'Find anything by typing a few words', ru: 'Chand alfaaz likh kar kuch bhi dhoondein' },
+    ai: { en: 'Ask a question and check the answer', ru: 'Sawal poochein aur jawab parkhein' },
+    ask: { en: 'Ask any question in your own words', ru: 'Apne alfaaz mein kuch bhi poochein' },
+  },
   featureLessons: { en: "Payment lessons", ru: "Payment lessons" },
   lessonsTitle: { en: "Payment lessons", ru: "Payment lessons" },
-  lessonsLead: { en: "Learn each payment in three rounds.", ru: "Har payment teen rounds mein seekhein." },
+  lessonsLead: { en: "Choose an app, then choose a round.", ru: "Pehle app chunein, phir round chunein." },
   yourTask: { en: 'Your task', ru: 'Aap ka kaam' },
   start: { en: 'Start', ru: 'Shuru Karein' },
   scenarioButton: { en: 'Test Real World Scenario', ru: 'Test Real World Scenario' },

@@ -92,9 +92,21 @@ function GoogleBox({ children }) {
   )
 }
 
+function GoogleBar() {
+  return (
+    <div className="g-bar">
+      <span>Gmail</span>
+      <span>Images</span>
+      <Icon name="grid" size={20} />
+      <b className="g-account">S</b>
+    </div>
+  )
+}
+
 function SearchHome({ values, onChange }) {
   return (
     <div className="g-home">
+      <GoogleBar />
       <img className="g-logo" src="/brands/google.png" alt="Google" />
       <GoogleBox>
         <input
@@ -109,29 +121,107 @@ function SearchHome({ values, onChange }) {
         <Tap id="search" className="g-button">Google Search</Tap>
         <Tap id="lucky" className="g-button">I&apos;m Feeling Lucky</Tap>
       </div>
+      <div className="g-shortcuts">
+        {[
+          ['g-news', 'doc', 'News'],
+          ['g-maps', 'home', 'Maps'],
+          ['g-videos', 'game', 'Videos'],
+          ['g-translate', 'spark', 'Translate'],
+        ].map(([id, icon, label]) => (
+          <Tap key={id} id={id} className="g-shortcut">
+            <span><Icon name={icon} size={20} /></span>
+            {label}
+          </Tap>
+        ))}
+      </div>
+      <div className="g-trending">
+        <strong>Trending searches</strong>
+        {[
+          ['g-trend-1', 'Eid holidays 2026'],
+          ['g-trend-2', 'Cricket score today'],
+          ['g-trend-3', 'Petrol price today'],
+        ].map(([id, label]) => (
+          <Tap key={id} id={id} className="g-trend">
+            <Icon name="search" size={16} /> {label}
+          </Tap>
+        ))}
+      </div>
       <p className="g-offered">Google offered in: <span lang="ur">اردو</span></p>
+      <footer className="g-footer">
+        <span>Pakistan</span>
+        <span>About · Privacy · Terms · Settings</span>
+      </footer>
     </div>
   )
 }
 
 const G_RESULTS = [
-  ['result', 'weather.example', 'https://weather.example', 'Karachi weather today and this week', 'Today 24°C and sunny. See the hourly forecast and the next 7 days.'],
-  ['other', 'news.example', 'https://news.example › weather', 'Weather news this week', 'Rain is expected in some parts of the country on Friday.'],
+  ['result', 'Weather Example', 'https://weather.example', 'Karachi weather today and this week', 'Today 24°C and sunny. See the hourly forecast and the next 7 days.'],
+  ['other', 'News Example', 'https://news.example › weather', 'Weather news this week', 'Rain is expected in some parts of the country on Friday.'],
+  ['other-2', 'Sky Example', 'https://sky.example › karachi', 'Is it going to rain tomorrow?', 'Check the chance of rain, wind and humidity for your city.'],
+]
+
+const G_DAYS = [
+  ['Mon', '24°'],
+  ['Tue', '26°'],
+  ['Wed', '25°'],
+  ['Thu', '23°'],
+  ['Fri', '22°'],
+]
+
+const G_QUESTIONS = [
+  ['g-q-1', 'What is the weather like in Karachi today?'],
+  ['g-q-2', 'Will it rain this week?'],
+  ['g-q-3', 'What is the hottest month in Karachi?'],
 ]
 
 function SearchResults() {
   return (
     <div className="g-results">
-      <img className="g-small" src="/brands/google.png" alt="Google" />
+      <div className="g-results-top">
+        <img className="g-small" src="/brands/google.png" alt="Google" />
+        <b className="g-account">S</b>
+      </div>
       <GoogleBox><span className="g-query">weather</span></GoogleBox>
-      <div className="g-tabs"><b>All</b><span>Images</span><span>News</span><span>Videos</span></div>
+      <div className="g-tabs"><b>All</b><span>Images</span><span>News</span><span>Videos</span><span>Maps</span></div>
+      <p className="g-count">About 2,140,000 results (0.42 seconds)</p>
+
+      <Tap id="g-weather" className="g-weather">
+        <span className="g-weather-now">
+          <span className="g-sun" aria-hidden="true" />
+          <strong>24°C</strong>
+          <span>Karachi · Sunny</span>
+        </span>
+        <span className="g-days">
+          {G_DAYS.map(([day, degrees]) => (
+            <span key={day}><small>{day}</small>{degrees}</span>
+          ))}
+        </span>
+      </Tap>
+
       <Tap id="ad" className="g-result">
         <small className="g-sponsored">Sponsored</small>
         <cite>win-prize.example</cite>
         <strong>Win a free phone now!</strong>
         <span>Claim your prize today. Limited offer.</span>
       </Tap>
-      {G_RESULTS.map(([id, site, url, title, snippet]) => (
+      <Tap id={G_RESULTS[0][0]} className="g-result">
+        <small>{G_RESULTS[0][1]}</small>
+        <cite>{G_RESULTS[0][2]}</cite>
+        <strong>{G_RESULTS[0][3]}</strong>
+        <span>{G_RESULTS[0][4]}</span>
+      </Tap>
+
+      <div className="g-ask">
+        <strong>People also ask</strong>
+        {G_QUESTIONS.map(([id, question]) => (
+          <Tap key={id} id={id} className="g-question">
+            {question} <Icon name="down" size={16} />
+          </Tap>
+        ))}
+      </div>
+
+      {G_RESULTS.slice(1).map(([id, site, url, title, snippet]) => (
         <Tap key={id} id={id} className="g-result">
           <small>{site}</small>
           <cite>{url}</cite>
@@ -139,6 +229,18 @@ function SearchResults() {
           <span>{snippet}</span>
         </Tap>
       ))}
+
+      <div className="g-related">
+        <strong>Related searches</strong>
+        <div>
+          {['weather tomorrow', 'weather lahore', 'rain today', 'weather islamabad'].map((word) => (
+            <Tap key={word} id={`g-rel-${word}`} className="g-chip">
+              <Icon name="search" size={14} /> {word}
+            </Tap>
+          ))}
+        </div>
+      </div>
+      <Tap id="g-next" className="g-more">More results</Tap>
     </div>
   )
 }

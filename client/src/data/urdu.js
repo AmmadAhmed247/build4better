@@ -205,6 +205,29 @@ export const URDU = {
   'Please check the number. It should have 10 to 13 digits.': 'نمبر دیکھ لیں۔ اس میں 10 سے 13 ہندسے ہونے چاہییں۔',
   Close: 'بند کریں',
 
+  'Choose an app, then choose a round.': 'پہلے ایپ چنیں، پھر راؤنڈ چنیں۔',
+  'Learn easypaisa, JazzCash, Meezan and bills': 'ایزی پیسہ، جاز کیش، میزان اور بل سیکھیں',
+  'Check if a message is safe': 'دیکھیں میسج ٹھیک ہے یا نہیں',
+  'Learn messages, voice notes and calls': 'میسج، وائس نوٹ اور کال سیکھیں',
+  'Answer a call and show your face': 'کال اٹھائیں اور چہرہ دکھائیں',
+  'Ask any question in your own words': 'اپنے الفاظ میں کچھ بھی پوچھیں',
+
+  'Stop voice': 'آواز بند کریں',
+
+  'Government Forms': 'سرکاری فارم',
+  'Learn to fill pension and other forms': 'پنشن اور دوسرے فارم بھرنا سیکھیں',
+
+  // Help panel
+  'Scam Detector': 'دھوکا پکڑیں',
+  'Not understanding something? Press here': 'کچھ سمجھ نہیں آ رہا؟ یہاں دبائیں',
+  'Let me think...': 'میں سوچ رہا ہوں...',
+  'The microphone is blocked. Press Allow in your browser, or type below.': 'مائیکروفون بند ہے۔ براؤزر میں الاؤ دبائیں، یا نیچے لکھ دیں۔',
+  'The microphone needs a secure link. Please type below.': 'مائیکروفون کے لیے محفوظ لنک چاہیے۔ براہ کرم نیچے لکھ دیں۔',
+  'I could not understand that. Please try again, or type below.': 'میں سمجھ نہیں سکا۔ دوبارہ کوشش کریں، یا نیچے لکھ دیں۔',
+  'Your words will appear here. You can also type.': 'آپ کی بات یہاں لکھی جائے گی۔ آپ خود بھی لکھ سکتے ہیں۔',
+  Ask: 'پوچھیں',
+  'Show me': 'مجھے دکھائیں',
+
   // Camera
   'Camera is blocked. Allow it in your browser.': 'کیمرہ بند ہے۔ براؤزر میں الاؤ کریں۔',
   'No camera was found.': 'کیمرہ نہیں ملا۔',

@@ -2,15 +2,17 @@ import { AnimatePresence, motion, MotionConfig } from 'framer-motion'
 import {
   AlertTriangle,
   CheckCircle2,
+  GripHorizontal,
   Languages,
   Landmark,
+  LoaderCircle,
   Mic,
-  MicOff,
   Minus,
   Phone,
   Plus,
   ShieldAlert,
   Siren,
+  Square,
   Volume2,
   X,
 } from 'lucide-react'
@@ -19,7 +21,8 @@ import { AvatarFace, useSpeaking } from './Avatar'
 import { LINES, UI } from '../data/content'
 import { addUrdu } from '../lib/i18n'
 import { containsSecret, localAnswer, SECRET_WARNING } from '../lib/localCheck'
-import { speak } from '../lib/speech'
+import { startRecording } from '../lib/recorder'
+import { speak, stopSpeaking } from '../lib/speech'
 
 const T = (en, ru, ur) => ({ en, ru, ur })
 
@@ -28,23 +31,25 @@ const TEXT = {
   smaller: T('Make text smaller', 'Likhai chhoti karein'),
   bigger: T('Make text bigger', 'Likhai bari karein'),
   listen: T('Listen', 'Sunein'),
+  help: T('Not understanding something? Press here', 'Kuch samajh nahi aa raha? Yahan dabayein'),
   micStart: T('Press and speak', 'Dabayein aur bolein'),
   micStop: T('Listening... press to stop', 'Sun raha hoon... rokne ke liye dabayein'),
-  micMissing: T(
-    'This browser cannot hear you. Please type instead.',
-    'Yeh browser awaaz nahi sun sakta. Baraye meherbani likh dein.',
+  thinking: T('Let me think...', 'Main soch raha hoon...'),
+  micBlocked: T(
+    'The microphone is blocked. Press Allow in your browser, or type below.',
+    'Microphone band hai. Browser mein Allow dabayein, ya neeche likh dein.',
+  ),
+  micSecure: T(
+    'The microphone needs a secure link. Please type below.',
+    'Microphone ke liye secure link chahiye. Baraye meherbani neeche likh dein.',
   ),
   micFailed: T(
-    'I could not hear you. Please try again, or type instead.',
-    'Main sun nahi saka. Dobara koshish karein, ya likh dein.',
+    'I could not understand that. Please try again, or type below.',
+    'Main samajh nahi saka. Dobara koshish karein, ya neeche likh dein.',
   ),
-  typeHere: T('Or type here', 'Ya yahan likhein'),
-  go: T('Go', 'Chalein'),
-  heard: T('You said', 'Aap ne kaha'),
-  movedToBox: T(
-    'I put this in the box below. Press Check Message.',
-    'Maine yeh neeche dabbe mein rakh diya. Check Message dabayein.',
-  ),
+  typeHere: T('Your words will appear here. You can also type.', 'Aap ki baat yahan likhi jayegi. Aap khud bhi likh sakte hain.'),
+  go: T('Ask', 'Poochein'),
+  open: T('Show me', 'Mujhe dikhayein'),
   scamTitle: T('Is this message safe?', 'Kya yeh message theek hai?'),
   stepOne: T('Copy the strange message.', 'Ajeeb message copy karein.'),
   stepTwo: T('Paste it in this box.', 'Is dabbe mein paste karein.'),
@@ -83,7 +88,10 @@ const ROUTES = [
   [/google|گوگل|search/i, 'google'],
   [/video|ویڈیو/i, 'video'],
   [/\bai\b|chatgpt/i, 'ai'],
-  [/bill|bijli|payment|paise|bank|money|بل|بینک|پیسے/i, 'bank'],
+  [/iban|آئی بان/i, 'ep-iban'],
+  [/raast|راست/i, 'ep-raast'],
+  [/bill|bijli|بل|بجلی/i, 'ep-ke'],
+  [/payment|paise|bank|money|بینک|پیسے/i, 'bank'],
 ]
 
 const RISK_STYLE = {
@@ -92,24 +100,28 @@ const RISK_STYLE = {
   none: ['border-emerald-500 bg-emerald-50 text-emerald-900', CheckCircle2],
 }
 
-const Recognition = window.SpeechRecognition ?? window.webkitSpeechRecognition
+async function post(url, body) {
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+  if (!response.ok) throw new Error(`${url} failed: ${response.status}`)
+  return response.json()
+}
 
 async function checkMessage(message, lang) {
   try {
-    const response = await fetch('/api/ask', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, lang }),
-    })
-    if (!response.ok) throw new Error(`ask failed: ${response.status}`)
-    return await response.json()
+    return await post('/api/ask', { message, lang })
   } catch {
     return localAnswer(message, lang)
   }
 }
 
-function Card({ className = '', children }) {
-  return <section className={`min-w-0 rounded-3xl border border-stone-200 bg-white p-5 shadow-sm ${className}`}>{children}</section>
+function offlineGuide(text, lang) {
+  const local = localAnswer(text, lang)
+  const feature = ROUTES.find(([pattern]) => pattern.test(text))?.[1] ?? local.lessonId ?? 'none'
+  return { transcript: text, reply: local.reply, speech: local.reply, feature }
 }
 
 function FontButton({ label, disabled, onClick, children }) {
@@ -132,7 +144,6 @@ function ScamResult({ answer, lang }) {
   const [style, Icon] = RISK_STYLE[risk]
   const resultRef = useRef(null)
 
-  // Brings the verdict into view, clear of the sticky header.
   useEffect(() => {
     resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [answer])
@@ -144,7 +155,7 @@ function ScamResult({ answer, lang }) {
       animate={{ opacity: 1, y: 0 }}
       role="status"
       data-guide="scam-result"
-      className={`mt-4 scroll-mt-40 rounded-2xl border-2 p-4 text-lg ${style}`}
+      className={`mt-4 scroll-mt-4 rounded-2xl border-2 p-4 text-lg ${style}`}
     >
       {answer.kind === 'scam_check' && (
         <p className="flex items-center gap-2 text-xl font-bold">
@@ -167,6 +178,352 @@ function ScamResult({ answer, lang }) {
         </>
       )}
     </motion.div>
+  )
+}
+
+function ScamPanel({ lang, message, onMessage }) {
+  const [answer, setAnswer] = useState(null)
+  const [checking, setChecking] = useState(false)
+
+  async function check(event) {
+    event.preventDefault()
+    const text = message.trim()
+    if (!text || checking) return
+    // Card numbers and personal PINs never leave the device.
+    if (containsSecret(text)) {
+      setAnswer({ kind: 'answer', risk: 'none', reply: SECRET_WARNING[lang], warning_signs: [], next_step: '' })
+      return
+    }
+    setChecking(true)
+    setAnswer(await checkMessage(text, lang))
+    setChecking(false)
+  }
+
+  return (
+    <>
+      <h2 className="flex items-center gap-2 pr-14 text-2xl font-bold text-red-800">
+        <ShieldAlert size={28} /> {TEXT.scamTitle[lang]}
+      </h2>
+      <ol className="my-3 list-decimal pl-7 text-lg">
+        <li>{TEXT.stepOne[lang]}</li>
+        <li>{TEXT.stepTwo[lang]}</li>
+        <li>{TEXT.stepThree[lang]}</li>
+      </ol>
+      <form onSubmit={check}>
+        <textarea
+          data-guide="scam-box"
+          rows={5}
+          value={message}
+          aria-label={TEXT.scamPlaceholder[lang]}
+          placeholder={TEXT.scamPlaceholder[lang]}
+          onChange={(event) => {
+            onMessage(event.target.value)
+            setAnswer(null)
+          }}
+          className="w-full resize-y rounded-2xl border-2 border-stone-400 bg-white p-3 text-lg"
+        />
+        <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_auto]">
+          <button
+            type="submit"
+            data-guide="scam-check"
+            disabled={!message.trim() || checking}
+            className="min-h-14 rounded-2xl border-0 bg-red-700 px-4 text-xl font-bold text-white disabled:opacity-40"
+          >
+            {checking ? TEXT.checking[lang] : TEXT.check[lang]}
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onMessage(UI.example)
+              setAnswer(null)
+            }}
+            className="min-h-14 rounded-2xl border-2 border-stone-500 bg-white px-4 text-lg font-semibold"
+          >
+            {TEXT.example[lang]}
+          </button>
+        </div>
+      </form>
+      {answer && <ScamResult answer={answer} lang={lang} />}
+    </>
+  )
+}
+
+function HelpPanel({ lang, onOpen }) {
+  const [status, setStatus] = useState('idle')
+  const [text, setText] = useState('')
+  const [guide, setGuide] = useState(null)
+  const [note, setNote] = useState('')
+  const speaking = useSpeaking()
+  const recording = useRef(null)
+  const statusRef = useRef('idle')
+
+  function changeStatus(next) {
+    statusRef.current = next
+    setStatus(next)
+  }
+
+  useEffect(() => {
+    speak(GREETING, lang)
+    return () => {
+      recording.current?.stop()
+      stopSpeaking()
+    }
+  }, [lang])
+
+  function showGuide(answer) {
+    setText(answer.transcript)
+    setGuide(answer)
+    speak({ en: answer.reply, ru: answer.reply, ur: answer.speech || answer.reply, live: true }, lang)
+  }
+
+  async function askByText(event) {
+    event.preventDefault()
+    const request = text.trim()
+    if (!request || statusRef.current !== 'idle') return
+    setNote('')
+    if (containsSecret(request)) {
+      setText('')
+      setGuide(null)
+      setNote(SECRET_WARNING[lang])
+      return
+    }
+    changeStatus('thinking')
+    try {
+      showGuide(await post('/api/guide', { message: request, lang }))
+    } catch {
+      showGuide(offlineGuide(request, lang))
+    }
+    changeStatus('idle')
+  }
+
+  async function toggleMic() {
+    if (statusRef.current === 'listening') {
+      recording.current?.stop()
+      return
+    }
+    if (statusRef.current !== 'idle') return
+    if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) {
+      setNote(TEXT.micSecure[lang])
+      return
+    }
+    stopSpeaking()
+    setNote('')
+    setGuide(null)
+    setText('')
+    try {
+      recording.current = await startRecording()
+      changeStatus('listening')
+      const audio = await recording.current.done
+      changeStatus('thinking')
+      const answer = await post('/api/guide', { audio, lang })
+      if (answer.transcript.trim()) showGuide(answer)
+      else setNote(TEXT.micFailed[lang])
+    } catch (error) {
+      setNote(error.name === 'NotAllowedError' ? TEXT.micBlocked[lang] : TEXT.micFailed[lang])
+    }
+    recording.current = null
+    changeStatus('idle')
+  }
+
+  const label = { idle: TEXT.micStart, listening: TEXT.micStop, thinking: TEXT.thinking }[status][lang]
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-3 pr-14">
+        <motion.div
+          className="w-20 flex-none"
+          animate={{ y: [0, -6, 0], scale: [1, 1.03, 1] }}
+          transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+        >
+          <AvatarFace speaking={speaking} />
+        </motion.div>
+        <div className="min-w-44 flex-1">
+          <p className="text-lg font-semibold">{GREETING[lang]}</p>
+          <button
+            type="button"
+            onClick={() => speak(GREETING, lang)}
+            className="mt-1 flex min-h-11 items-center gap-1 border-0 bg-transparent text-lg font-semibold text-blue-800 underline"
+          >
+            <Volume2 size={20} /> {TEXT.listen[lang]}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid justify-items-center gap-2">
+        <div className="relative grid size-32 place-items-center">
+          {status === 'listening' &&
+            [0, 1].map((ring) => (
+              <motion.span
+                key={ring}
+                className="absolute inset-0 rounded-full bg-blue-400"
+                initial={{ scale: 0.8, opacity: 0.5 }}
+                animate={{ scale: 1.4, opacity: 0 }}
+                transition={{ duration: 1.6, repeat: Infinity, delay: ring * 0.8, ease: 'easeOut' }}
+              />
+            ))}
+          <motion.button
+            type="button"
+            data-guide="voice-mic"
+            aria-pressed={status === 'listening'}
+            aria-label={label}
+            disabled={status === 'thinking'}
+            whileTap={{ scale: 0.94 }}
+            onClick={toggleMic}
+            className={`relative grid size-28 place-items-center rounded-full border-0 text-white shadow-lg ${
+              status === 'listening' ? 'bg-red-700' : 'bg-blue-700'
+            }`}
+          >
+            {status === 'idle' && <Mic size={44} />}
+            {status === 'listening' && <Square size={38} fill="white" />}
+            {status === 'thinking' && <LoaderCircle size={44} className="animate-spin" />}
+          </motion.button>
+        </div>
+        <p className="text-center text-xl font-semibold" role="status">{label}</p>
+      </div>
+
+      <form className="grid gap-2" onSubmit={askByText}>
+        <textarea
+          data-guide="voice-text"
+          rows={2}
+          value={text}
+          aria-label={TEXT.typeHere[lang]}
+          placeholder={TEXT.typeHere[lang]}
+          onChange={(event) => setText(event.target.value)}
+          className="w-full resize-y rounded-xl border-2 border-stone-400 bg-white p-3 text-lg"
+        />
+        <button
+          type="submit"
+          data-guide="voice-go"
+          disabled={!text.trim() || status !== 'idle'}
+          className="min-h-14 rounded-xl border-0 bg-blue-700 px-5 text-lg font-bold text-white disabled:opacity-40"
+        >
+          {TEXT.go[lang]}
+        </button>
+      </form>
+
+      {note && <p className="rounded-xl bg-amber-50 p-3 text-lg text-amber-900" role="alert">{note}</p>}
+
+      {guide && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          data-guide="guide-reply"
+          className="rounded-2xl border-2 border-blue-300 bg-blue-50 p-4 text-lg text-blue-950"
+        >
+          <p className="whitespace-pre-line">{guide.reply}</p>
+          {guide.feature !== 'none' && (
+            <button
+              type="button"
+              data-guide="guide-open"
+              onClick={() => onOpen(guide.feature, guide.transcript)}
+              className="mt-3 min-h-14 w-full rounded-xl border-0 bg-emerald-700 px-4 text-lg font-bold text-white"
+            >
+              {TEXT.open[lang]}
+            </button>
+          )}
+        </motion.div>
+      )}
+    </div>
+  )
+}
+
+// Floating help that stays available on every page.
+export function HelpOverlay({ lang, panel, scamMessage, compact, onPanel, onScamMessage, onOpen }) {
+  const dragArea = useRef(null)
+  const dragged = useRef(false)
+
+  useEffect(() => {
+    if (!panel) return undefined
+    const onKey = (event) => event.key === 'Escape' && onPanel(null)
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [panel, onPanel])
+
+  return (
+    <MotionConfig reducedMotion="user">
+      <div ref={dragArea} className="pointer-events-none fixed inset-2 z-20" />
+      <motion.button
+        type="button"
+        data-guide="help-pop"
+        drag
+        dragConstraints={dragArea}
+        dragElastic={0}
+        dragMomentum={false}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        whileDrag={{ scale: 1.04, cursor: 'grabbing' }}
+        onDragStart={() => {
+          dragged.current = true
+        }}
+        onDragEnd={() => {
+          // The browser may send a click right after a drag, and that one must not open the panel.
+          setTimeout(() => {
+            dragged.current = false
+          }, 100)
+        }}
+        onClick={() => {
+          if (!dragged.current) onPanel('help')
+        }}
+        aria-label={TEXT.help[lang]}
+        title={TEXT.help[lang]}
+        className={`fixed z-20 flex cursor-grab touch-none items-center border-2 border-blue-700 bg-white text-left text-sm leading-tight font-bold text-blue-900 shadow-lg select-none ${
+          compact ? 'top-[42%] right-0 rounded-l-xl border-r-0 p-0.5' : 'right-3 bottom-24 max-w-44 gap-1.5 rounded-xl px-2 py-1'
+        }`}
+      >
+        <span className={`pointer-events-none flex-none ${compact ? 'w-6' : 'w-8'}`}><AvatarFace /></span>
+        {!compact && (
+          <>
+            <span className="pointer-events-none">{TEXT.help[lang]}</span>
+            <GripHorizontal size={14} className="pointer-events-none flex-none text-blue-400" aria-hidden="true" />
+          </>
+        )}
+      </motion.button>
+
+      <AnimatePresence>
+        {panel && (
+          <motion.div
+            key="backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => onPanel(null)}
+            className="fixed inset-0 z-30 bg-black/45"
+          />
+        )}
+        {panel && (
+          <motion.aside
+            key="panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label={panel === 'help' ? TEXT.help[lang] : TEXT.scamTitle[lang]}
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'tween', duration: 0.25 }}
+            className="fixed inset-y-0 right-0 z-40 w-full max-w-md overflow-y-auto bg-white p-5 text-stone-900 shadow-2xl wrap-anywhere"
+          >
+            <button
+              type="button"
+              aria-label={TEXT.close[lang]}
+              data-guide="panel-close"
+              onClick={() => onPanel(null)}
+              className="absolute top-4 right-4 z-10 grid size-12 place-items-center rounded-xl border-2 border-stone-300 bg-white"
+            >
+              <X size={24} />
+            </button>
+            {panel === 'help' ? (
+              <HelpPanel
+                lang={lang}
+                onOpen={onOpen}
+              />
+            ) : (
+              <ScamPanel lang={lang} message={scamMessage} onMessage={onScamMessage} />
+            )}
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
+    </MotionConfig>
   )
 }
 
@@ -199,7 +556,7 @@ function SosDialog({ lang, number, onSave, onClose }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-40 grid place-items-center overflow-y-auto bg-black/60 p-4"
+      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-black/60 p-4"
     >
       <motion.div
         role="dialog"
@@ -281,70 +638,11 @@ export default function Dashboard({
   onScenario,
   onFeature,
 }) {
-  const [listening, setListening] = useState(false)
-  const [note, setNote] = useState('')
-  const [typed, setTyped] = useState('')
-  const [message, setMessage] = useState('')
-  const [answer, setAnswer] = useState(null)
-  const [checking, setChecking] = useState(false)
   const [sosOpen, setSosOpen] = useState(false)
-  const speaking = useSpeaking()
-  const recognition = useRef(null)
-  const boxRef = useRef(null)
-
-  useEffect(() => () => recognition.current?.abort(), [])
-
-  function handleRequest(text) {
-    const request = text.trim()
-    if (!request) return
-    const route = ROUTES.find(([pattern]) => pattern.test(request))?.[1]
-    if (route === 'bank') onBank()
-    else if (route && route !== 'scam') onFeature(route)
-    else {
-      if (route !== 'scam') setMessage(request)
-      setNote(`${TEXT.heard[lang]}: "${request}". ${TEXT.movedToBox[lang]}`)
-      boxRef.current?.focus()
-    }
-  }
-
-  function toggleMic() {
-    if (listening) {
-      recognition.current?.stop()
-      return
-    }
-    if (!Recognition) {
-      setNote(TEXT.micMissing[lang])
-      return
-    }
-    const listener = new Recognition()
-    listener.lang = lang === 'en' ? 'en-IN' : 'ur-PK'
-    listener.interimResults = false
-    listener.onresult = (event) => handleRequest(event.results[0][0].transcript)
-    listener.onerror = () => setNote(TEXT.micFailed[lang])
-    listener.onend = () => setListening(false)
-    recognition.current = listener
-    setNote('')
-    setListening(true)
-    listener.start()
-  }
-
-  async function check(event) {
-    event.preventDefault()
-    const text = message.trim()
-    if (!text || checking) return
-    // Card numbers and personal PINs never leave the device.
-    if (containsSecret(text)) {
-      setAnswer({ kind: 'answer', risk: 'none', reply: SECRET_WARNING[lang], warning_signs: [], next_step: '' })
-      return
-    }
-    setChecking(true)
-    setAnswer(await checkMessage(text, lang))
-    setChecking(false)
-  }
 
   return (
     <MotionConfig reducedMotion="user">
-      <main className="min-h-0 flex-1 overflow-y-auto bg-[#fbf6ec] text-stone-900">
+      <main className="min-h-0 flex-1 overflow-y-auto text-stone-900">
         <header className="sticky top-0 z-10 border-b border-stone-200 bg-white/95">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-2">
             <strong className="text-2xl text-[#0f5c5c]">Saathi</strong>
@@ -377,174 +675,53 @@ export default function Dashboard({
           </div>
         </header>
 
-        <div className="mx-auto grid max-w-6xl grid-cols-1 gap-4 p-4 pb-40 wrap-anywhere lg:grid-cols-2 lg:pb-8">
-          <Card className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-center gap-4">
-              <motion.div
-                className="w-24 flex-none sm:w-32"
-                animate={{ y: [0, -8, 0], scale: [1, 1.03, 1] }}
-                transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-              >
-                <AvatarFace speaking={speaking} />
-              </motion.div>
-              <div className="min-w-52 flex-1">
-                <p className="text-xl font-semibold">{GREETING[lang]}</p>
-                <button
-                  type="button"
-                  onClick={() => speak(GREETING, lang)}
-                  className="mt-1 flex min-h-11 items-center gap-1 border-0 bg-transparent text-lg font-semibold text-blue-800 underline"
-                >
-                  <Volume2 size={20} /> {TEXT.listen[lang]}
-                </button>
-              </div>
-            </div>
-
-            <div className="grid justify-items-center gap-2 py-2">
-              <div className="relative grid size-32 place-items-center">
-                {listening &&
-                  [0, 1].map((ring) => (
-                    <motion.span
-                      key={ring}
-                      className="absolute inset-0 rounded-full bg-blue-400"
-                      initial={{ scale: 0.8, opacity: 0.5 }}
-                      animate={{ scale: 1.4, opacity: 0 }}
-                      transition={{ duration: 1.6, repeat: Infinity, delay: ring * 0.8, ease: 'easeOut' }}
-                    />
-                  ))}
-                <motion.button
-                  type="button"
-                  data-guide="voice-mic"
-                  aria-pressed={listening}
-                  aria-label={listening ? TEXT.micStop[lang] : TEXT.micStart[lang]}
-                  whileTap={{ scale: 0.94 }}
-                  onClick={toggleMic}
-                  className={`relative grid size-28 place-items-center rounded-full border-0 text-white shadow-lg ${
-                    listening ? 'bg-red-700' : 'bg-blue-700'
-                  }`}
-                >
-                  {listening ? <MicOff size={44} /> : <Mic size={44} />}
-                </motion.button>
-              </div>
-              <p className="text-center text-xl font-semibold" role="status">
-                {listening ? TEXT.micStop[lang] : TEXT.micStart[lang]}
-              </p>
-            </div>
-
-            <form
-              className="flex gap-2"
-              onSubmit={(event) => {
-                event.preventDefault()
-                handleRequest(typed)
-                setTyped('')
-              }}
+        <div className="mx-auto max-w-6xl p-4 pb-48 wrap-anywhere lg:pb-8">
+        <section className="min-w-0">
+          <h1 className="mb-3 text-2xl font-bold">{TEXT.practiceTitle[lang]}</h1>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <motion.button
+              type="button"
+              data-guide="bank-sim"
+              whileHover={{ y: -3 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onBank}
+              className="flex min-h-36 flex-col items-start justify-center gap-1 rounded-3xl border-0 bg-gradient-to-br from-mz-dark to-mz-green p-5 text-left text-white"
             >
-              <input
-                value={typed}
-                aria-label={TEXT.typeHere[lang]}
-                placeholder={TEXT.typeHere[lang]}
-                autoComplete="off"
-                onChange={(event) => setTyped(event.target.value)}
-                className="min-h-14 w-full min-w-0 rounded-xl border-2 border-stone-400 bg-white px-3 text-lg"
-              />
-              <button type="submit" className="min-h-14 flex-none rounded-xl border-0 bg-blue-700 px-5 text-lg font-bold text-white">
-                {TEXT.go[lang]}
-              </button>
-            </form>
-            {note && <p className="rounded-xl bg-blue-50 p-3 text-lg text-blue-900" role="status">{note}</p>}
-          </Card>
-
-          <Card>
-            <h2 className="flex items-center gap-2 text-2xl font-bold text-red-800">
-              <ShieldAlert size={28} /> {TEXT.scamTitle[lang]}
-            </h2>
-            <ol className="my-3 list-decimal pl-7 text-lg">
-              <li>{TEXT.stepOne[lang]}</li>
-              <li>{TEXT.stepTwo[lang]}</li>
-              <li>{TEXT.stepThree[lang]}</li>
-            </ol>
-            <form onSubmit={check}>
-              <textarea
-                ref={boxRef}
-                data-guide="scam-box"
-                rows={4}
-                value={message}
-                aria-label={TEXT.scamPlaceholder[lang]}
-                placeholder={TEXT.scamPlaceholder[lang]}
-                onChange={(event) => {
-                  setMessage(event.target.value)
-                  setAnswer(null)
-                }}
-                className="w-full resize-y rounded-2xl border-2 border-stone-400 bg-white p-3 text-lg"
-              />
-              <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_auto]">
-                <button
-                  type="submit"
-                  data-guide="scam-check"
-                  disabled={!message.trim() || checking}
-                  className="min-h-14 rounded-2xl border-0 bg-red-700 px-4 text-xl font-bold text-white disabled:opacity-40"
-                >
-                  {checking ? TEXT.checking[lang] : TEXT.check[lang]}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMessage(UI.example)
-                    setAnswer(null)
-                  }}
-                  className="min-h-14 rounded-2xl border-2 border-stone-500 bg-white px-4 text-lg font-semibold"
-                >
-                  {TEXT.example[lang]}
-                </button>
-              </div>
-            </form>
-            {answer && <ScamResult answer={answer} lang={lang} />}
-          </Card>
-
-          <section className="lg:col-span-2">
-            <h2 className="mb-3 text-2xl font-bold">{TEXT.practiceTitle[lang]}</h2>
-            <div className="grid gap-3 sm:grid-cols-2">
+              <Landmark size={32} className="text-mz-gold" />
+              <strong className="text-xl">{UI.bankBox[lang]}</strong>
+              <span className="text-lg">{UI.bankBoxLead[lang]}</span>
+            </motion.button>
+            <motion.button
+              type="button"
+              data-guide="scenario"
+              whileHover={{ y: -3 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={onScenario}
+              className="flex min-h-36 flex-col items-start justify-center gap-1 rounded-3xl border-0 bg-emerald-700 p-5 text-left text-white"
+            >
+              <img src="/brands/easypaisa.png" alt="" className="size-9 rounded-lg bg-white" />
+              <strong className="text-xl">{UI.scenarioButton[lang]}</strong>
+              <span className="text-lg">{UI.scenarioLead[lang]}</span>
+            </motion.button>
+          </div>
+          <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {features.map(([key, FeatureIcon, label]) => (
               <motion.button
                 type="button"
-                data-guide="bank-sim"
+                key={key}
+                data-guide={`box-${key}`}
                 whileHover={{ y: -3 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onBank}
-                className="flex min-h-32 flex-col items-start justify-center gap-1 rounded-3xl border-0 bg-gradient-to-br from-mz-dark to-mz-green p-5 text-left text-white"
+                whileTap={{ scale: 0.97 }}
+                onClick={() => onFeature(key)}
+                className="flex min-h-44 flex-col items-center justify-center gap-1 rounded-2xl border border-stone-300 bg-white p-3 text-center text-lg font-semibold"
               >
-                <Landmark size={32} className="text-mz-gold" />
-                <strong className="text-xl">{UI.bankBox[lang]}</strong>
-                <span className="text-lg">{UI.bankBoxLead[lang]}</span>
+                <FeatureIcon size={30} className={key === 'scam' ? 'text-red-700' : 'text-emerald-800'} />
+                {label[lang]}
+                <span className="text-base leading-snug font-normal text-stone-600">{UI.featureHelp[key][lang]}</span>
               </motion.button>
-              <motion.button
-                type="button"
-                data-guide="scenario"
-                whileHover={{ y: -3 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={onScenario}
-                className="flex min-h-32 flex-col items-start justify-center gap-1 rounded-3xl border-0 bg-emerald-700 p-5 text-left text-white"
-              >
-                <img src="/brands/easypaisa.png" alt="" className="size-9 rounded-lg bg-white" />
-                <strong className="text-xl">{UI.scenarioButton[lang]}</strong>
-                <span className="text-lg">{UI.scenarioLead[lang]}</span>
-              </motion.button>
-            </div>
-            <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {features.map(([key, FeatureIcon, label]) => (
-                <motion.button
-                  type="button"
-                  key={key}
-                  data-guide={`box-${key}`}
-                  whileHover={{ y: -3 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => onFeature(key)}
-                  className="flex min-h-28 flex-col items-center justify-center gap-2 rounded-2xl border border-stone-300 bg-white p-2 text-center text-lg font-semibold"
-                >
-                  <FeatureIcon size={30} className="text-emerald-800" />
-                  {label[lang]}
-                </motion.button>
-              ))}
-            </div>
-          </section>
+            ))}
+          </div>
+        </section>
         </div>
       </main>
 

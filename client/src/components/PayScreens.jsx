@@ -475,6 +475,14 @@ function JcSend({ values, onChange }) {
 function MzLogin({ values, onChange }) {
   return (
     <div className="pay-center">
+      <img
+        className="pay-logo"
+        src="/brands/meezan.png"
+        alt=""
+        onError={(event) => {
+          event.currentTarget.style.display = 'none'
+        }}
+      />
       <div className="mz-mark" aria-label="Meezan Bank practice">Meezan Bank</div>
       <Field id="pin" label="Password" type="password" value={values.pin} onChange={onChange} />
       <Tap id="login">Login</Tap>

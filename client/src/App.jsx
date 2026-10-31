@@ -1,14 +1,14 @@
-import { Camera, CreditCard, MessageCircle, MessagesSquare, Search, Sparkles, Video } from 'lucide-react'
+import { Camera, Check, CreditCard, FileText, Landmark, MessageCircle, MessagesSquare, Search, ShieldAlert, Sparkles, Video, VolumeX } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import AskSaathi from './components/AskSaathi'
-import Avatar, { AvatarFace } from './components/Avatar'
+import Avatar, { AvatarFace, useSpeaking } from './components/Avatar'
 import BankSim from './components/BankSim'
-import Dashboard from './components/Dashboard'
-import Icon from './components/Icons'
+import GovernmentFormAssistant from './components/GovernmentFormAssistant'
+import Dashboard, { HelpOverlay } from './components/Dashboard'
 import LessonRunner from './components/LessonRunner'
 import WhatsAppSim from './components/WhatsAppSim'
-import { LESSONS, LINES, PRACTICE, TIPS, UI } from './data/content'
-import { speak, stopSpeaking } from './lib/speech'
+import { LESSONS, LINES, PROVIDERS, TIPS, UI } from './data/content'
+import { skipSpeaking, speak, stopSpeaking } from './lib/speech'
 import { loadState, saveState } from './lib/storage'
 
 const ASK_HINT_DELAY_MS = 30000
@@ -16,6 +16,8 @@ const FONT_SCALES = [100, 115, 130]
 
 const FEATURES = [
   ['lessons', CreditCard, UI.featureLessons],
+  ['scam', ShieldAlert, UI.scamBox],
+  ['forms', FileText, UI.formsBox],
   ['whatsapp', MessagesSquare, { en: 'WhatsApp', ru: 'WhatsApp' }],
   ['video', Video, LESSONS.video.title],
   ['screenshot', Camera, LESSONS.screenshot.title],
@@ -31,6 +33,29 @@ const INTRO = [
   { line: LINES.introAsk, target: 'nav-ask' },
 ]
 
+function StopVoice({ lang }) {
+  const speaking = useSpeaking()
+  if (!speaking) return null
+  return (
+    <button
+      type="button"
+      data-guide="stop-voice"
+      onClick={skipSpeaking}
+      className="fixed top-2 left-1/2 z-[60] flex min-h-12 -translate-x-1/2 items-center gap-2 rounded-full border-2 border-white bg-stone-900 px-4 text-lg font-bold whitespace-nowrap text-white shadow-lg"
+    >
+      <VolumeX size={22} /> {UI.stopVoice[lang]}
+    </button>
+  )
+}
+
+function BrandLogo({ src, className }) {
+  const [missing, setMissing] = useState(false)
+  if (!src || missing) {
+    return <span className={`${className} card-icon-bank`} aria-hidden="true"><Landmark size={28} /></span>
+  }
+  return <img className={className} src={src} alt="" onError={() => setMissing(true)} />
+}
+
 function LessonCard({ lesson, lang, progress, onStart }) {
   const finished = progress?.[lesson.id] ?? {}
   if (lesson.kind === 'tip') {
@@ -41,18 +66,14 @@ function LessonCard({ lesson, lang, progress, onStart }) {
           <strong>{lesson.title[lang]}</strong>
           <small>{lesson.blurb[lang]}</small>
         </span>
-        {finished[1] && <span className="tick" aria-label="Done">✓</span>}
+        {finished[1] && <span className="tick" aria-label="Done"><Check size={24} strokeWidth={3} /></span>}
       </button>
     )
   }
   return (
     <article className="practice-card">
       <div className="practice-head">
-        {lesson.logo ? (
-          <img className="card-logo" src={lesson.logo} alt="" />
-        ) : (
-          <span className="card-icon card-icon-bank" aria-hidden="true"><Icon name="bank" size={30} /></span>
-        )}
+        <BrandLogo className="card-logo" src={lesson.logo} />
         <div>
           <h2>{lesson.title[lang]}</h2>
           <p>{lesson.blurb[lang]}</p>
@@ -68,7 +89,10 @@ function LessonCard({ lesson, lang, progress, onStart }) {
             className="round-choice"
             onClick={() => onStart(lesson.id, index + 1)}
           >
-            <span>{UI.round[lang]} {index + 1}{finished[index + 1] ? ' ✓' : ''}</span>
+            <span className="round-label">
+              {UI.round[lang]} {index + 1}
+              {finished[index + 1] && <Check size={15} strokeWidth={3} aria-label="Done" />}
+            </span>
             <strong>{round[lang]}</strong>
           </button>
         ))}
@@ -82,6 +106,9 @@ function App() {
   const [lang, setLang] = useState(saved.lang ?? null)
   const [view, setView] = useState(saved.lang ? 'home' : 'language')
   const [active, setActive] = useState(null)
+  const [providerId, setProviderId] = useState(PROVIDERS[0].id)
+  const [helpPanel, setHelpPanel] = useState(null)
+  const [scamMessage, setScamMessage] = useState('')
   const [guide, setGuideState] = useState(null)
   const introRunning = useRef(false)
   const fontStep = saved.fontStep ?? 0
@@ -174,8 +201,16 @@ function App() {
     else go({ tip: 'tips', practice: 'lessons' }[LESSONS[active.id].kind] ?? 'home')
   }
 
-  function openFeature(key) {
-    if (['lessons', 'ask', 'whatsapp'].includes(key)) go(key)
+  function openFeature(key, spoken) {
+    if (key === 'scam') {
+      if (spoken) setScamMessage(spoken)
+      setHelpPanel('scam')
+      return
+    }
+    setHelpPanel(null)
+    if (key === 'bank') go('bank')
+    else if (key === 'scenario') startLesson('scenario', 3)
+    else if (['lessons', 'ask', 'whatsapp', 'forms'].includes(key)) go(key)
     else startLesson(key, 1)
   }
 
@@ -203,6 +238,16 @@ function App() {
 
   return (
     <div className="shell">
+      <StopVoice lang={lang} />
+      <HelpOverlay
+        lang={lang}
+        panel={helpPanel}
+        scamMessage={scamMessage}
+        compact={!['home', 'tips', 'lessons'].includes(view)}
+        onPanel={setHelpPanel}
+        onScamMessage={setScamMessage}
+        onOpen={openFeature}
+      />
       {view === 'lesson' && (
         <LessonRunner
           key={active.run}
@@ -233,17 +278,37 @@ function App() {
       )}
 
       {view === 'lessons' && (
-        <main className="page">
+        <main className="page page-wide">
           <header className="page-head">
             <h1>{UI.lessonsTitle[lang]}</h1>
             <button type="button" className="text-button" onClick={() => go('home')}>{UI.back[lang]}</button>
           </header>
           <p className="lead">{UI.lessonsLead[lang]}</p>
-          {PRACTICE.map((id) => (
-            <LessonCard key={id} lesson={LESSONS[id]} lang={lang} progress={saved.progress} onStart={startLesson} />
-          ))}
+          <div className="provider-tabs" role="tablist" aria-label={UI.lessonsTitle[lang]}>
+            {PROVIDERS.map((provider) => (
+              <button
+                type="button"
+                role="tab"
+                key={provider.id}
+                data-guide={`tab-${provider.id}`}
+                aria-selected={provider.id === providerId}
+                className={provider.id === providerId ? 'provider-tab is-active' : 'provider-tab'}
+                onClick={() => setProviderId(provider.id)}
+              >
+                <BrandLogo className="provider-logo" src={provider.logo} />
+                <span>{provider.name}</span>
+              </button>
+            ))}
+          </div>
+          <div className="lesson-grid" role="tabpanel">
+            {PROVIDERS.find((provider) => provider.id === providerId).lessons.map((id) => (
+              <LessonCard key={id} lesson={LESSONS[id]} lang={lang} progress={saved.progress} onStart={startLesson} />
+            ))}
+          </div>
         </main>
       )}
+
+      {view === 'forms' && <GovernmentFormAssistant lang={lang} setGuide={setGuide} onExit={() => go('home')} />}
 
       {view === 'whatsapp' && <WhatsAppSim lang={lang} setGuide={setGuide} onExit={() => go('home')} />}
 
@@ -268,7 +333,7 @@ function App() {
 
       {view === 'ask' && <AskSaathi lang={lang} onOpenLesson={(id) => startLesson(id, 1)} />}
 
-      {!['lesson', 'bank', 'whatsapp'].includes(view) && (
+      {!['lesson', 'bank', 'whatsapp', 'forms'].includes(view) && (
         <nav className="nav">
           {[
             ['home', 'nav-practice', UI.practice],
@@ -288,7 +353,7 @@ function App() {
         </nav>
       )}
 
-      {view !== 'ask' && (view !== 'home' || guide?.line) && (
+      {view !== 'ask' && (!['home', 'lessons', 'tips', 'forms'].includes(view) || guide?.line) && (
         <Avatar guide={guide} lang={lang} onSkip={endIntro} />
       )}
     </div>

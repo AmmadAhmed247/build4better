@@ -337,7 +337,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
   const showPhone = stage === 'topup'
 
   return (
-    <main className="min-h-0 flex-1 overflow-y-auto bg-stone-100 text-stone-900">
+    <main className="min-h-0 flex-1 overflow-y-auto text-stone-900">
       <header className="sticky top-0 z-10 bg-mz-dark text-white shadow">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-2">
           <button type="button" onClick={onExit} className="flex min-h-11 items-center gap-1 border-0 bg-transparent font-semibold text-white">

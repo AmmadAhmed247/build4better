@@ -28,7 +28,7 @@ body,
 }
 
 body {
-  background: var(--paper);
+  background: linear-gradient(180deg, #f0fdf4 0%, #d1fae5 100%) fixed;
   color: var(--ink);
   font-family: 'Segoe UI', Roboto, 'Noto Sans', system-ui, sans-serif;
   font-size: 1.25rem;
@@ -1099,4 +1099,136 @@ html[lang='ur'] .dock-caption {
   font-size: 0.8rem;
   text-align: center;
   transform: none;
+}
+
+/* Payment lessons on wide screens */
+.lesson-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.lesson-grid .practice-card {
+  margin-bottom: 0;
+}
+
+@media (min-width: 1024px) {
+  .page-wide {
+    width: min(100%, 1180px);
+    padding-bottom: 32px;
+  }
+
+  .lesson-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .lesson {
+    display: grid;
+    grid-template-columns: 330px 390px minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    column-gap: 24px;
+    width: min(100%, 1180px);
+    padding: 0 16px 12px;
+  }
+
+  .lesson-top {
+    grid-column: 1 / -1;
+  }
+
+  .lesson .task-strip {
+    display: block;
+    grid-column: 1;
+    grid-row: 2;
+    margin: 0 0 12px;
+    font-size: 1rem;
+  }
+
+  .lesson .phone {
+    grid-column: 2;
+    grid-row: 2 / 4;
+    width: 100%;
+  }
+
+  .lesson .dock {
+    grid-column: 1;
+    grid-row: 3;
+    align-self: start;
+    padding: 0;
+  }
+
+  .lesson .dock-caption {
+    max-height: 190px;
+    font-size: 1.05rem;
+  }
+}
+
+/* Payment lesson app tabs */
+.provider-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.provider-tab {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-height: 68px;
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.provider-tab.is-active {
+  border-color: var(--teal);
+  background: var(--teal-soft);
+  color: var(--teal);
+}
+
+.provider-logo {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #fff;
+  object-fit: contain;
+}
+
+.card-logo.card-icon-bank {
+  display: grid;
+  place-items: center;
+}
+
+.round-label {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.round-label svg,
+.tick svg {
+  color: var(--green);
+}
+
+@media (min-width: 768px) {
+  .provider-tabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .lesson-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .lesson-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

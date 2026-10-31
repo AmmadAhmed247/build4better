@@ -6,6 +6,7 @@ let voices = []
 let currentToken = 0
 let fallbackTimer = null
 let player = null
+let finishCurrent = null
 
 function loadVoices() {
   voices = synth?.getVoices() ?? []
@@ -45,6 +46,13 @@ export function subscribeSpeaking(fn) {
   return () => listeners.delete(fn)
 }
 
+// Ends the line early but still runs what comes after it, so guided steps keep going.
+export function skipSpeaking() {
+  player?.pause()
+  synth?.cancel()
+  finishCurrent?.()
+}
+
 export function stopSpeaking() {
   currentToken += 1
   clearTimeout(fallbackTimer)
@@ -81,21 +89,40 @@ export function speak(line, lang, onDone) {
   const token = currentToken
 
   const finish = () => {
-    if (token !== currentToken) return
+    if (token !== currentToken || finishCurrent !== finish) return
+    finishCurrent = null
     clearTimeout(fallbackTimer)
     setSpeaking(false)
     onDone?.()
   }
+  finishCurrent = finish
   const useBrowser = () => {
     if (token === currentToken) speakWithBrowser(line, lang, finish)
   }
 
+  const play = (source) => {
+    if (token !== currentToken) return
+    const audio = new Audio(source)
+    player = audio
+    audio.onended = finish
+    audio.onerror = useBrowser
+    audio.play().then(() => {
+      if (token === currentToken) setSpeaking(true)
+    }, useBrowser)
+  }
+
   const voice = lang === 'en' ? 'en' : 'ur'
-  const audio = new Audio(`/audio/${audioName(voice, voice === 'en' ? line.en : line.ur)}.mp3`)
-  player = audio
-  audio.onended = finish
-  audio.onerror = useBrowser
-  audio.play().then(() => {
-    if (token === currentToken) setSpeaking(true)
-  }, useBrowser)
+  const text = voice === 'en' ? line.en : line.ur
+  if (!line.live) {
+    play(`/audio/${audioName(voice, text)}.mp3`)
+    return
+  }
+  fetch('/api/speak', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ voice, text }),
+  })
+    .then((response) => (response.ok ? response.blob() : Promise.reject(new Error('speech failed'))))
+    .then((blob) => play(URL.createObjectURL(blob)))
+    .catch(useBrowser)
 }
