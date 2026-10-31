@@ -43,9 +43,14 @@ function toLine(text) {
   return { en: text, ru: text, ur: text }
 }
 
-function Reply({ item, lang, onOpenLesson }) {
+// AI answers carry an Urdu script version, which the recorded voice can read well.
+function answerLine(answer) {
+  const text = [answer.reply, answer.next_step].filter(Boolean).join(' ')
+  return answer.speak_text ? { en: text, ru: text, ur: answer.speak_text, live: true } : toLine(text)
+}
+
+function Reply({ item, lang, busy, canReply, onReply, onOpenLesson }) {
   const { answer } = item
-  const spoken = [answer.reply, answer.next_step].filter(Boolean).join(' ')
   return (
     <div className={`reply reply-${answer.kind === 'scam_check' ? answer.risk : 'plain'}`}>
       {answer.kind === 'scam_check' && <strong className="reply-risk">{UI.risk[answer.risk][lang]}</strong>}
@@ -62,8 +67,17 @@ function Reply({ item, lang, onOpenLesson }) {
           <p>{answer.next_step}</p>
         </>
       )}
+      {canReply && answer.suggested_replies?.length > 0 && (
+        <div className="reply-actions" data-guide="ask-replies">
+          {answer.suggested_replies.map((reply) => (
+            <button type="button" className="secondary" key={reply} disabled={busy} onClick={() => onReply(reply)}>
+              {reply}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="reply-actions">
-        <button type="button" className="text-button" onClick={() => speak(toLine(spoken), lang)}>
+        <button type="button" className="text-button" onClick={() => speak(answerLine(answer), lang)}>
           {UI.askListen[lang]}
         </button>
         {answer.lessonId && (
@@ -98,9 +112,9 @@ export default function AskSaathi({ lang, onOpenLesson }) {
     endRef.current?.previousElementSibling?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [items, busy])
 
-  function addAnswer(answer) {
-    setItems((current) => [...current, { id: crypto.randomUUID(), role: 'assistant', answer }])
-    speak(toLine([answer.reply, answer.next_step].filter(Boolean).join(' ')), lang)
+  function addAnswer(answer, isPrivate = false) {
+    setItems((current) => [...current, { id: crypto.randomUUID(), role: 'assistant', answer, private: isPrivate }])
+    speak(answerLine(answer), lang)
   }
 
   async function fetchAnswer(message, attachment, history) {
@@ -122,26 +136,43 @@ export default function AskSaathi({ lang, onOpenLesson }) {
     const trimmed = message.trim()
     if ((!trimmed && !image) || busy) return
     const attachment = image
-    const history = items.map((item) => ({
-      role: item.role,
-      text: item.role === 'user' ? item.text : item.answer.reply,
-    }))
+    // Card numbers and personal PINs never leave the device, now or in later history.
+    const isPrivate = containsSecret(trimmed)
+    const history = items
+      .filter((item) => !item.private)
+      .map((item) => ({
+        role: item.role,
+        text: item.role === 'user' ? item.historyText : item.answer.reply,
+      }))
+    const userId = crypto.randomUUID()
     setItems((current) => [
       ...current,
-      { id: crypto.randomUUID(), role: 'user', text: trimmed, preview: attachment?.preview },
+      {
+        id: userId,
+        role: 'user',
+        text: trimmed,
+        historyText: attachment ? `[screenshot] ${trimmed}`.trim() : trimmed,
+        preview: attachment?.preview,
+        private: isPrivate,
+      },
     ])
     setText('')
     setImage(null)
 
-    // Card numbers and personal PINs never leave the device.
-    if (containsSecret(trimmed)) {
-      addAnswer({ kind: 'answer', risk: 'none', reply: SECRET_WARNING[lang], warning_signs: [], next_step: '' })
+    if (isPrivate) {
+      addAnswer({ kind: 'answer', risk: 'none', reply: SECRET_WARNING[lang], warning_signs: [], next_step: '' }, true)
       return
     }
 
     setBusy(true)
     try {
-      addAnswer(await fetchAnswer(trimmed, attachment, history))
+      const answer = await fetchAnswer(trimmed, attachment, history)
+      // Later turns remember the picture through this short description.
+      if (attachment && answer.screen_summary) {
+        const historyText = `[screenshot: ${answer.screen_summary}] ${trimmed}`.trim()
+        setItems((current) => current.map((item) => (item.id === userId ? { ...item, historyText } : item)))
+      }
+      addAnswer(answer)
       setOnline(true)
     } catch {
       setOnline(false)
@@ -192,14 +223,22 @@ export default function AskSaathi({ lang, onOpenLesson }) {
             </button>
           </>
         )}
-        {items.map((item) =>
+        {items.map((item, index) =>
           item.role === 'user' ? (
             <div className="mine" key={item.id}>
               {item.preview && <img src={item.preview} alt="" />}
               {item.text && <p>{item.text}</p>}
             </div>
           ) : (
-            <Reply key={item.id} item={item} lang={lang} onOpenLesson={onOpenLesson} />
+            <Reply
+              key={item.id}
+              item={item}
+              lang={lang}
+              busy={busy}
+              canReply={index === items.length - 1}
+              onReply={send}
+              onOpenLesson={onOpenLesson}
+            />
           ),
         )}
         {busy && <p className="ask-busy">{UI.askThinking[lang]}</p>}
