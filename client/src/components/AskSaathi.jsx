@@ -91,7 +91,7 @@ function Reply({ item, lang, busy, canReply, onReply, onOpenLesson }) {
   )
 }
 
-export default function AskSaathi({ lang, onOpenLesson }) {
+export default function AskSaathi({ lang, hidden, onOpenLesson }) {
   const [items, setItems] = useState([])
   const [text, setText] = useState('')
   const [image, setImage] = useState(null)
@@ -205,7 +205,7 @@ export default function AskSaathi({ lang, onOpenLesson }) {
   }
 
   return (
-    <main className="ask">
+    <main className="ask" hidden={hidden}>
       <header className="ask-head">
         <div className="ask-face"><AvatarFace speaking={speaking} /></div>
         <div>

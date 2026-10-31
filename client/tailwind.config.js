@@ -5,13 +5,13 @@ export default {
       colors: {
         'light-green-50': '#F0FDF4',
         accent: {
-          soft: '#D1FAE5',
-          DEFAULT: '#059669',
-          strong: '#047857',
+          soft: '#E4EFD2',
+          DEFAULT: '#2F6A3A',
+          strong: '#24543A',
         },
       },
       fontFamily: {
-        sans: ['Roboto', 'Noto Nastaliq Urdu', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
+        sans: ['Inter Tight', 'Roboto', 'Noto Nastaliq Urdu', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
         mono: ['JetBrains Mono', 'ui-monospace', 'Cascadia Code', 'Consolas', 'monospace'],
       },
       keyframes: {

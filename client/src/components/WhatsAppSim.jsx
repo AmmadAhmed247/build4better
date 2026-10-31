@@ -382,7 +382,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                 onClick={onExit}
                 className="mx-auto mt-auto mb-3 flex min-h-12 items-center gap-1 rounded-full border-0 bg-black/40 px-5 text-lg font-semibold text-white"
               >
-                <ArrowLeft size="1.25rem" /> {tr(lang, 'Home', 'Home')}
+                <ArrowLeft size="1.25rem" /> {tr(lang, 'Back', 'Wapas')}
               </button>
             </div>
           )}
@@ -432,7 +432,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                   onClick={onExit}
                   className="flex min-h-11 items-center gap-1 border-0 bg-transparent text-lg font-semibold text-white"
                 >
-                  <ArrowLeft size="1.25rem" /> {tr(lang, 'Home', 'Home')}
+                  <ArrowLeft size="1.25rem" /> {tr(lang, 'Back', 'Wapas')}
                 </button>
                 <span className="text-lg">{clock()}</span>
               </div>

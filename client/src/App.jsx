@@ -1,11 +1,14 @@
-import { BookOpen, Camera, Check, CreditCard, FileText, Landmark, MessageCircle, MessagesSquare, Search, ShieldAlert, Sparkles, Video, VolumeX } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { motion } from 'framer-motion'
+import { ArrowLeft, BookOpen, Box, Camera, Check, CreditCard, FileText, Home, Landmark, Lightbulb, MessageCircle, MessagesSquare, PenLine, Search, ShieldAlert, Sparkles, Video, VolumeX } from 'lucide-react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import AskSaathi from './components/AskSaathi'
-import Avatar, { AvatarFace, useSpeaking } from './components/Avatar'
+import Avatar, { AvatarFace, CursorEyes, useSpeaking } from './components/Avatar'
 import BankSim from './components/BankSim'
 import GovernmentFormAssistant from './components/GovernmentFormAssistant'
 import Dashboard, { HelpOverlay } from './components/Dashboard'
+import HeroLanding from './components/HeroLanding'
 import LessonRunner from './components/LessonRunner'
+import PageHeader from './components/PageHeader'
 import Passbook from './components/Passbook'
 import WhatsAppSim from './components/WhatsAppSim'
 import { LESSONS, LINES, PROVIDERS, TIPS, UI } from './data/content'
@@ -26,6 +29,42 @@ const FEATURES = [
   ['google', Search, LESSONS.google.title],
   ['ai', Sparkles, LESSONS.ai.title],
   ['ask', MessageCircle, UI.ask],
+]
+
+const HERO_CONTENT = {
+  brand: 'Saathi',
+  lines: [
+    { text: 'Practice that', after: 0 },
+    { text: 'makes', after: 1 },
+    { text: 'phones', before: 2 },
+    { text: 'feel easy' },
+  ],
+  stickers: [
+    { label: 'Payments', Icon: CreditCard, paper: 'bg-lime-50', badge: 'bg-lime-600' },
+    { label: 'WhatsApp', Icon: PenLine, paper: 'bg-fuchsia-50', badge: 'bg-fuchsia-500' },
+    { label: 'Forms', Icon: Box, paper: 'bg-violet-50', badge: 'bg-violet-500' },
+  ],
+  badge: { name: 'Your practice partner', status: 'Safe to practise', face: <AvatarFace /> },
+  tagline: 'No real money moves. Try as many times as you like.',
+  card: { image: '/brands/easypaisa.png', kicker: 'Practice app', title: 'Payment lessons' },
+  dock: [
+    { label: 'Payment lessons', Icon: CreditCard, tone: 'text-lime-700' },
+    { label: 'WhatsApp', Icon: MessagesSquare, tone: 'text-emerald-700' },
+    { label: 'Scam Detector', Icon: ShieldAlert, tone: 'text-red-700' },
+    { label: 'Form Helper', Icon: FileText, tone: 'text-sky-700' },
+  ],
+}
+
+const LANGUAGES = [
+  ['ru', 'Roman Urdu'],
+  ['ur', 'اردو'],
+  ['en', 'English'],
+]
+
+const MENU = [
+  ['home', 'nav-practice', UI.practice, Home],
+  ['tips', 'nav-tips', UI.tips, Lightbulb],
+  ['ask', 'nav-ask', UI.ask, MessageCircle],
 ]
 
 const INTRO = [
@@ -106,7 +145,7 @@ function LessonCard({ lesson, lang, progress, onStart }) {
 function App() {
   const [saved, setSaved] = useState(loadState)
   const [lang, setLang] = useState(saved.lang ?? null)
-  const [view, setView] = useState(saved.lang ? 'home' : 'language')
+  const [view, setView] = useState(saved.lang ? 'home' : 'welcome')
   const [active, setActive] = useState(null)
   const [providerId, setProviderId] = useState(PROVIDERS[0].id)
   const [helpPanel, setHelpPanel] = useState(null)
@@ -116,6 +155,11 @@ function App() {
   const fontStep = saved.fontStep ?? 0
   const hintShown = useRef(false)
   const introPlayed = useRef(Boolean(saved.introSeen))
+  const viewRef = useRef(view)
+  const historyDepth = useRef(0)
+  const scrollSpots = useRef({})
+  const askOpened = useRef(false)
+  if (view === 'ask') askOpened.current = true
 
   const setGuide = useCallback((next) => {
     setGuideState(next ? { ...next, nonce: Math.random() } : null)
@@ -168,13 +212,39 @@ function App() {
   function chooseLanguage(code) {
     setLang(code)
     update({ lang: code })
-    setView('home')
+    if (view === 'language') back()
+    else go('home', null, { replace: true })
     // Started from the tap so browsers allow speech.
     if (!introPlayed.current) {
       introPlayed.current = true
       setTimeout(() => playIntro(), 300)
     }
   }
+
+  useEffect(() => {
+    window.history.replaceState({ view, active: null, depth: 0 }, '')
+    const onPop = ({ state }) => {
+      if (!state) return
+      const page = document.querySelector('.shell main:not([hidden])')
+      if (page) scrollSpots.current[viewRef.current] = page.scrollTop
+      historyDepth.current = state.depth
+      introRunning.current = false
+      setHelpPanel(null)
+      setGuide(null)
+      setActive(state.active)
+      setView(state.view)
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+    // Only the first entry is written here. Every later one comes from go().
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useLayoutEffect(() => {
+    viewRef.current = view
+    const page = document.querySelector('.shell main:not([hidden])')
+    if (page) page.scrollTop = scrollSpots.current[view] ?? 0
+  }, [view])
 
   useEffect(() => {
     if (!['home', 'tips'].includes(view) || hintShown.current) return undefined
@@ -186,21 +256,37 @@ function App() {
     return () => clearTimeout(timer)
   }, [view, setGuide])
 
-  function go(next) {
+  function rememberScroll() {
+    const page = document.querySelector('.shell main:not([hidden])')
+    if (page) scrollSpots.current[viewRef.current] = page.scrollTop
+  }
+
+  // The browser's history is the back stack, so its Back button and ours always agree.
+  function go(next, lesson = active, { replace = false } = {}) {
     introRunning.current = false
+    rememberScroll()
+    delete scrollSpots.current[next]
+    if (!replace) historyDepth.current += 1
+    const entry = { view: next, active: lesson, depth: historyDepth.current }
+    if (replace) window.history.replaceState(entry, '')
+    else window.history.pushState(entry, '')
     setGuide(null)
+    setActive(lesson)
     setView(next)
   }
 
-  function startLesson(id, round) {
-    setGuide(null)
-    setActive((current) => ({ id, round, run: (current?.run ?? 0) + 1 }))
-    setView('lesson')
+  function back() {
+    if (historyDepth.current > 0) window.history.back()
+    else go('home', null, { replace: true })
+  }
+
+  function startLesson(id, round, { replace = false, from = view } = {}) {
+    go('lesson', { id, round, from, run: (active?.run ?? 0) + 1 }, { replace })
   }
 
   function exitLesson(nextRound) {
-    if (nextRound) startLesson(active.id, nextRound)
-    else go({ tip: 'tips', practice: 'lessons' }[LESSONS[active.id].kind] ?? 'home')
+    if (nextRound) startLesson(active.id, nextRound, { replace: true, from: active.from })
+    else back()
   }
 
   function openFeature(key, spoken) {
@@ -225,20 +311,61 @@ function App() {
     })
   }
 
-  if (view === 'language') {
+  if (view === 'welcome') {
     return (
-      <main className="language">
-        <div className="language-face"><AvatarFace /></div>
-        <h1>Saathi</h1>
-        <p>{UI.chooseLanguage.ru} · <span lang="ur">{UI.chooseLanguage.ur}</span> · {UI.chooseLanguage.en}</p>
-        <button type="button" className="primary" onClick={() => chooseLanguage('ru')}>Roman Urdu</button>
-        <button type="button" className="primary" lang="ur" onClick={() => chooseLanguage('ur')}>اردو</button>
-        <button type="button" className="primary" onClick={() => chooseLanguage('en')}>English</button>
-      </main>
+      <>
+        <CursorEyes />
+        <HeroLanding content={HERO_CONTENT}>
+          <p className="mb-3 text-center text-lg font-semibold">
+            {UI.chooseLanguage.ru} · <span lang="ur">{UI.chooseLanguage.ur}</span> · {UI.chooseLanguage.en}
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            {LANGUAGES.map(([code, label]) => (
+              <button
+                type="button"
+                key={code}
+                lang={code === 'ur' ? 'ur' : undefined}
+                className="min-h-14 rounded-2xl border-0 bg-white px-6 text-lg font-bold text-emerald-900 shadow-lg"
+                onClick={() => chooseLanguage(code)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </HeroLanding>
+      </>
     )
   }
 
+  if (view === 'language') {
+    return (
+      <>
+        <CursorEyes />
+        <main className="language">
+          <button type="button" className="back-button" onClick={back}>
+            <ArrowLeft size="1.375rem" className="rtl:rotate-180" aria-hidden="true" /> {UI.back[lang]}
+          </button>
+          <div className="language-face"><AvatarFace /></div>
+          <h1 className="display">Saathi</h1>
+          <p>{UI.chooseLanguage.ru} · <span lang="ur">{UI.chooseLanguage.ur}</span> · {UI.chooseLanguage.en}</p>
+          {LANGUAGES.map(([code, label]) => (
+            <button type="button" className="primary" key={code} lang={code === 'ur' ? 'ur' : undefined} onClick={() => chooseLanguage(code)}>
+              {label}
+            </button>
+          ))}
+        </main>
+      </>
+    )
+  }
+
+  const avatarShown = view !== 'ask' && (!['home', 'lessons', 'tips', 'forms', 'passbook'].includes(view) || Boolean(guide?.line))
+  const bankHidden = view !== 'bank'
+  const bankKept = view === 'bank' || (view === 'lesson' && active?.from === 'bank')
+  const activeTab = view === 'lessons' ? 'home' : view
+
   return (
+    <>
+    <CursorEyes hidden={avatarShown} />
     <div className="shell">
       <StopVoice lang={lang} />
       <HelpOverlay
@@ -281,11 +408,7 @@ function App() {
 
       {view === 'lessons' && (
         <main className="page page-wide">
-          <header className="page-head">
-            <h1>{UI.lessonsTitle[lang]}</h1>
-            <button type="button" className="text-button" onClick={() => go('home')}>{UI.back[lang]}</button>
-          </header>
-          <p className="lead">{UI.lessonsLead[lang]}</p>
+          <PageHeader lang={lang} title={UI.lessonsTitle[lang]} lead={UI.lessonsLead[lang]} onBack={back} />
           <div className="provider-tabs" role="tablist" aria-label={UI.lessonsTitle[lang]}>
             {PROVIDERS.map((provider) => (
               <button
@@ -310,57 +433,62 @@ function App() {
         </main>
       )}
 
-      {view === 'passbook' && <Passbook lang={lang} onStart={(id) => startLesson(id, 1)} onExit={() => go('home')} />}
+      {view === 'passbook' && <Passbook lang={lang} onStart={(id) => startLesson(id, 1)} onExit={back} />}
 
-      {view === 'forms' && <GovernmentFormAssistant lang={lang} setGuide={setGuide} onExit={() => go('home')} />}
+      {view === 'forms' && <GovernmentFormAssistant lang={lang} setGuide={setGuide} onExit={back} />}
 
-      {view === 'whatsapp' && <WhatsAppSim lang={lang} setGuide={setGuide} onExit={() => go('home')} />}
+      {view === 'whatsapp' && <WhatsAppSim lang={lang} setGuide={setGuide} onExit={back} />}
 
-      {view === 'bank' && (
+      {bankKept && (
         <BankSim
           lang={lang}
+          away={bankHidden}
           setGuide={setGuide}
-          onExit={() => go('home')}
+          onExit={back}
           onRealWorld={() => startLesson('scenario', 3)}
         />
       )}
 
       {view === 'tips' && (
         <main className="page">
-          <h1>{UI.tipsTitle[lang]}</h1>
-          <p className="lead">{UI.tipsLead[lang]}</p>
+          <PageHeader lang={lang} title={UI.tipsTitle[lang]} lead={UI.tipsLead[lang]} />
           {TIPS.map((id) => (
             <LessonCard key={id} lesson={LESSONS[id]} lang={lang} progress={saved.progress} onStart={startLesson} />
           ))}
         </main>
       )}
 
-      {view === 'ask' && <AskSaathi lang={lang} onOpenLesson={(id) => startLesson(id, 1)} />}
+      {askOpened.current && <AskSaathi lang={lang} hidden={view !== 'ask'} onOpenLesson={(id) => startLesson(id, 1)} />}
 
       {!['lesson', 'bank', 'whatsapp', 'forms', 'passbook'].includes(view) && (
         <nav className="nav">
-          {[
-            ['home', 'nav-practice', UI.practice],
-            ['tips', 'nav-tips', UI.tips],
-            ['ask', 'nav-ask', UI.ask],
-          ].map(([id, guideKey, label]) => (
+          {MENU.map(([id, guideKey, label, Icon]) => (
             <button
               type="button"
               key={id}
               data-guide={guideKey}
-              className={view === id ? 'nav-item is-active' : 'nav-item'}
-              onClick={() => go(id)}
+              aria-current={activeTab === id ? 'page' : undefined}
+              className={activeTab === id ? 'nav-item is-active' : 'nav-item'}
+              onClick={() => {
+                if (activeTab !== id) go(id)
+                else if (view !== id) back()
+              }}
             >
-              {label[lang]}
+              {activeTab === id && (
+                <motion.span layoutId="dock-active" className="nav-active" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />
+              )}
+              <Icon size="1.5rem" aria-hidden="true" />
+              <span>{label[lang]}</span>
             </button>
           ))}
         </nav>
       )}
 
-      {view !== 'ask' && (!['home', 'lessons', 'tips', 'forms', 'passbook'].includes(view) || guide?.line) && (
+      {avatarShown && (
         <Avatar guide={guide} lang={lang} onSkip={endIntro} />
       )}
     </div>
+    </>
   )
 }
 

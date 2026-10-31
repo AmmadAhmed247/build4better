@@ -1,6 +1,5 @@
 import { AnimatePresence, motion, MotionConfig } from 'framer-motion'
 import {
-  ArrowLeft,
   CheckCircle2,
   FileText,
   Info,
@@ -15,12 +14,12 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { AvatarFace, useSpeaking } from './Avatar'
 import { containsSecret, SECRET_WARNING } from '../lib/localCheck'
 import { speak, stopSpeaking } from '../lib/speech'
+import PageHeader from './PageHeader'
 
 const T = (en, ru, ur) => ({ en, ru, ur })
 
 const TEXT = {
   title: T('Form Helper', 'Form Helper', 'فارم مددگار'),
-  home: T('Home', 'Home', 'ہوم'),
   lead: T('Fill forms calmly, one step at a time.', 'Form aaram se bharein, ek waqt mein ek qadam.', 'فارم آرام سے بھریں، ایک وقت میں ایک قدم۔'),
   pensionTab: T('Pension Form', 'Pension Form', 'پنشن فارم'),
   genericTab: T('Any Form', 'Koi Bhi Form', 'کوئی بھی فارم'),
@@ -507,27 +506,13 @@ export default function GovernmentFormAssistant({ lang, setGuide, onExit }) {
     <MotionConfig reducedMotion="user">
       <main className="min-h-0 flex-1 overflow-y-auto text-stone-900">
         <div className="mx-auto max-w-6xl p-4 pb-40 wrap-anywhere lg:pb-10">
-          <button
-            type="button"
-            onClick={onExit}
-            className="flex min-h-12 items-center gap-1 border-0 bg-transparent text-lg font-semibold text-emerald-900"
-          >
-            <ArrowLeft size="1.375rem" /> {TEXT.home[lang]}
-          </button>
-
-          <header className="my-3 flex items-center gap-3">
-            <motion.span
-              className="w-20 flex-none"
-              animate={{ y: [0, -6, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <AvatarFace speaking={speaking} />
-            </motion.span>
-            <div className="min-w-0">
-              <h1 className="text-3xl font-bold text-emerald-900">{TEXT.title[lang]}</h1>
-              <p className="text-xl">{TEXT.lead[lang]}</p>
-            </div>
-          </header>
+          <PageHeader
+            lang={lang}
+            title={TEXT.title[lang]}
+            lead={TEXT.lead[lang]}
+            onBack={onExit}
+            media={<AvatarFace speaking={speaking} />}
+          />
 
           <p className="mb-4 flex items-start gap-2 rounded-2xl bg-white/80 p-3 text-lg text-emerald-950">
             <ShieldCheck size="1.5rem" className="mt-0.5 flex-none text-emerald-700" /> {TEXT.privacy[lang]}

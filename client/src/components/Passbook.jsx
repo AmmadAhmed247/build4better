@@ -1,5 +1,4 @@
 import {
-  ArrowLeft,
   BadgeCheck,
   ChevronRight,
   Flame,
@@ -10,11 +9,11 @@ import {
   Zap,
 } from 'lucide-react'
 import { addUrdu } from '../lib/i18n'
+import PageHeader from './PageHeader'
 
 const T = (en, ru, ur) => ({ en, ru, ur })
 
 const TEXT = {
-  home: T('Home', 'Home', 'ہوم'),
   title: T('My Passbook', 'Meri Passbook', 'میری پاس بک'),
   lead: T(
     'See where your money went, then practise a payment.',
@@ -176,21 +175,11 @@ export default function Passbook({
   return (
     <main className="min-h-0 flex-1 overflow-y-auto font-sans text-stone-900">
       <div className="mx-auto max-w-6xl p-4 pb-10 wrap-anywhere">
-        <button
-          type="button"
-          onClick={onExit}
-          className="flex min-h-12 items-center gap-1 border-0 bg-transparent text-lg font-medium text-accent-strong"
-        >
-          <ArrowLeft size="1.375rem" className="rtl:rotate-180" /> {TEXT.home[lang]}
-        </button>
-
-        <header className="mt-2 mb-5">
-          <h1 className="text-4xl font-bold text-stone-900">{TEXT.title[lang]}</h1>
-          <p className="mt-1 text-xl text-stone-700">{TEXT.lead[lang]}</p>
-          <p className="mt-2 flex items-center gap-2 text-lg font-medium text-accent-strong">
+        <PageHeader lang={lang} title={TEXT.title[lang]} lead={TEXT.lead[lang]} onBack={onExit}>
+          <p className="mt-2 flex items-center gap-2 text-lg font-medium">
             <BadgeCheck size="1.375rem" aria-hidden="true" /> {TEXT.practice[lang]}
           </p>
-        </header>
+        </PageHeader>
 
         <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
           <article className="min-w-0 rounded-r-2xl border-0 border-l-8 border-double border-accent bg-white p-5 shadow-sm sm:p-6">

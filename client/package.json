@@ -11,6 +11,7 @@
     "voices": "node scripts/make-voices.mjs"
   },
   "dependencies": {
+    "@fontsource/inter-tight": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@fontsource/noto-nastaliq-urdu": "^5.3.0",
     "@fontsource/roboto": "^5.3.0",
