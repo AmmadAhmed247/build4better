@@ -112,7 +112,7 @@
   --brand-soft: #e9f6ef;
   --brand-ink: #2d2a3e;
   color: var(--brand-ink);
-  font-family: Inter, 'Segoe UI', Roboto, sans-serif;
+  font-family: Inter, 'Segoe UI', Roboto, 'Noto Nastaliq Urdu', sans-serif;
 }
 
 .brand-jc {

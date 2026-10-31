@@ -1,3 +1,5 @@
+import { addUrdu, tr } from './i18n.js'
+
 // Offline answers, used when no API key is set or the backend cannot be reached.
 
 const SIGNS = [
@@ -90,6 +92,10 @@ const SAFE_REMINDER = {
   ru: 'Koi khatre ki nishani nahi mili, lekin is se yeh sabit nahi hota ke yeh mehfooz hai. Apna OTP, PIN ya password kabhi share na karein.',
 }
 
+addUrdu(SIGNS)
+addUrdu(TOPICS)
+addUrdu(SAFE_REMINDER)
+
 const SHARED_SECRET =
   /\b\d{13,19}\b|(my|mera|meri)\s+(pin|otp|password|cvv)|(pin|otp|password|cvv)\s*(is|hai|:)\s*\S+/i
 
@@ -102,6 +108,8 @@ export const SECRET_WARNING = {
   ru: 'Isay apne paas rakhein. Apna PIN, OTP, password ya card number yahan ya kisi anjaan jagah kabhi na likhein. Main ne yeh kahin nahi bheja.',
 }
 
+addUrdu(SECRET_WARNING)
+
 export function localAnswer(message, lang) {
   const found = SIGNS.filter((sign) => sign.test.test(message))
   const looksLikeMessage = message.trim().split(/\s+/).length > 6
@@ -112,17 +120,11 @@ export function localAnswer(message, lang) {
       kind: 'scam_check',
       risk: danger ? 'danger' : 'careful',
       reply: danger
-        ? lang === 'ru'
-          ? 'Yeh scam lagta hai. Is ka jawab na dein.'
-          : 'This looks like a scam. Please do not reply.'
-        : lang === 'ru'
-          ? 'Ehtiyat karein. Is mein ek khatre ki nishani hai.'
-          : 'Please be careful. This has a warning sign.',
+        ? tr(lang, 'This looks like a scam. Please do not reply.', 'Yeh scam lagta hai. Is ka jawab na dein.')
+        : tr(lang, 'Please be careful. This has a warning sign.', 'Ehtiyat karein. Is mein ek khatre ki nishani hai.'),
       warning_signs: found.map((sign) => sign[lang]),
       next_step:
-        lang === 'ru'
-          ? 'Message delete kar dein. Agar fikar ho to apne card ki pusht par likhe number par bank ko call karein.'
-          : 'Delete the message. If you are worried, call the number printed on the back of your bank card.',
+        tr(lang, 'Delete the message. If you are worried, call the number printed on the back of your bank card.', 'Message delete kar dein. Agar fikar ho to apne card ki pusht par likhe number par bank ko call karein.'),
     }
   }
 
@@ -144,7 +146,7 @@ export function localAnswer(message, lang) {
       risk: 'none',
       reply: SAFE_REMINDER[lang],
       warning_signs: [],
-      next_step: lang === 'ru' ? 'Agar shak ho to ghar walon se pooch lein.' : 'If you feel unsure, ask a family member.',
+      next_step: tr(lang, 'If you feel unsure, ask a family member.', 'Agar shak ho to ghar walon se pooch lein.'),
     }
   }
 
@@ -152,9 +154,7 @@ export function localAnswer(message, lang) {
     kind: 'answer',
     risk: 'none',
     reply:
-      lang === 'ru'
-        ? 'Main abhi offline hoon. Aap mujhe koi shakki message paste karein, ya Tips section dekhein.'
-        : 'I am offline right now. You can paste a suspicious message for me to check, or open Tips.',
+      tr(lang, 'I am offline right now. You can paste a suspicious message for me to check, or open Tips.', 'Main abhi offline hoon. Aap mujhe koi shakki message paste karein, ya Tips section dekhein.'),
     warning_signs: [],
     next_step: '',
   }

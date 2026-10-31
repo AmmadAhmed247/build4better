@@ -16,17 +16,12 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AvatarFace, useSpeaking } from './Avatar'
-import { UI } from '../data/content'
+import { LINES, UI } from '../data/content'
+import { addUrdu } from '../lib/i18n'
 import { containsSecret, localAnswer, SECRET_WARNING } from '../lib/localCheck'
 import { speak } from '../lib/speech'
 
 const T = (en, ru, ur) => ({ en, ru, ur })
-
-const GREETING = T(
-  'Hello! I am Saathi. Press the microphone and tell me what you need.',
-  'Assalam o Alaikum! Main Saathi hoon. Microphone dabayein aur batayein aap ko kya chahiye.',
-  'السلام علیکم! میں ساتھی ہوں۔ مائیکروفون دبائیں اور بتائیں آپ کو کیا چاہیے۔',
-)
 
 const TEXT = {
   sos: T('Family SOS', 'Family SOS'),
@@ -76,6 +71,10 @@ const TEXT = {
   sosBad: T('Please check the number. It should have 10 to 13 digits.', 'Number dekh lein. Is mein 10 se 13 hindsay hone chahiye.'),
   close: T('Close', 'Band karein'),
 }
+
+addUrdu(TEXT)
+
+const GREETING = LINES.greeting
 
 const ROUTES = [
   [/scam|fraud|dhoka|دھوکا|فراڈ/i, 'scam'],
@@ -318,7 +317,7 @@ export default function Dashboard({
       return
     }
     const listener = new Recognition()
-    listener.lang = lang === 'ru' ? 'ur-PK' : 'en-IN'
+    listener.lang = lang === 'en' ? 'en-IN' : 'ur-PK'
     listener.interimResults = false
     listener.onresult = (event) => handleRequest(event.results[0][0].transcript)
     listener.onerror = () => setNote(TEXT.micFailed[lang])

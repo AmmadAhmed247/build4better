@@ -1,4 +1,5 @@
 import Icon from './Icons'
+import SelfView from './SelfView'
 import { PAY_SCREENS } from './PayScreens'
 
 // Pretend app screens. Anything with data-guide can be tapped and checked by the lesson.
@@ -16,6 +17,9 @@ function Tap({ id, className = 'app-button', children }) {
 }
 
 function CallScreen({ children, name = 'Beta Ahmed', status, face }) {
+  const items = [children].flat()
+  const preview = items.filter((item) => item?.type === SelfView)
+  const actions = items.filter((item) => item?.type !== SelfView)
   return (
     <div className="call">
       <div className="call-person">
@@ -23,7 +27,8 @@ function CallScreen({ children, name = 'Beta Ahmed', status, face }) {
         <strong>{name}</strong>
         <span>{status}</span>
       </div>
-      <div className="call-actions">{children}</div>
+      {preview}
+      <div className="call-actions">{actions}</div>
     </div>
   )
 }
@@ -47,10 +52,13 @@ function CallActive() {
   )
 }
 
-function CallCamera() {
+function CallCamera({ values, lang }) {
   return (
-    <CallScreen status="Camera on" face>
-      <Tap id="mute" className="round-button">Mute</Tap>
+    <CallScreen status={values.muted ? 'Muted' : 'Camera on'} face>
+      <SelfView lang={lang} />
+      <Tap id="mute" className={values.muted ? 'round-button round-red' : 'round-button'}>
+        {values.muted ? 'Unmute' : 'Mute'}
+      </Tap>
       <Tap id="camera-off" className="round-button">Camera</Tap>
       <Tap id="hangup" className="round-button round-red">End</Tap>
     </CallScreen>

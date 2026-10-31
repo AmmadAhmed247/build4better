@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { BANK_LINES as LINE, RECIPIENT, TOPUP_NUMBER } from '../data/bankSim'
+import { tr } from '../lib/i18n'
 
 const START_BALANCE = 125000
 const IBAN_FORMAT = /^PK\d{2}[A-Z]{4}[0-9A-Z]{16}$/
@@ -183,7 +184,6 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
   const [invoice, setInvoice] = useState('')
   const [phone, setPhone] = useState('')
   const toastTimer = useRef(null)
-  const ru = lang === 'ru'
 
   // The avatar first points at Copy, then at Paste once something is copied.
   useEffect(() => {
@@ -244,12 +244,12 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
     const value = digits(iban)
     if (!IBAN_FORMAT.test(value)) {
       showError(
-        ru ? 'IBAN 24 huroof ka hota hai aur PK se shuru hota hai.' : 'An IBAN has 24 characters and starts with PK.',
+        tr(lang, 'An IBAN has 24 characters and starts with PK.', 'IBAN 24 huroof ka hota hai aur PK se shuru hota hai.'),
         LINE.ibanFormat,
         'iban',
       )
     } else if (value !== RECIPIENT.iban) {
-      showError(ru ? 'Yeh account nahi mila.' : 'This account was not found.', LINE.ibanUnknown, 'iban')
+      showError(tr(lang, 'This account was not found.', 'Yeh account nahi mila.'), LINE.ibanUnknown, 'iban')
     } else {
       open('send-amount')
     }
@@ -258,9 +258,9 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
   function checkAmount() {
     const value = Number(amount)
     if (!Number.isInteger(value) || value <= 0) {
-      showError(ru ? 'Sahi raqam likhein.' : 'Please enter a valid amount.', LINE.amountBad, 'amount')
+      showError(tr(lang, 'Please enter a valid amount.', 'Sahi raqam likhein.'), LINE.amountBad, 'amount')
     } else if (value > balance) {
-      showError(ru ? 'Balance kam hai.' : 'Your balance is too low.', LINE.amountBad, 'amount')
+      showError(tr(lang, 'Your balance is too low.', 'Balance kam hai.'), LINE.amountBad, 'amount')
     } else {
       setError('')
       setStage('send-review')
@@ -286,7 +286,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
   function fetchBill() {
     if (digits(invoice) !== digits(bill.invoice)) {
       showError(
-        ru ? 'Yeh number bill se nahi milta.' : 'This number does not match your bill.',
+        tr(lang, 'This number does not match your bill.', 'Yeh number bill se nahi milta.'),
         LINE.invoiceBad,
         'invoice',
       )
@@ -309,9 +309,9 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
   function finishTopup() {
     const value = Number(amount)
     if (digits(phone) !== TOPUP_NUMBER) {
-      showError(ru ? 'Number dobara dekhein.' : 'Please check the number.', LINE.topupBad, 'phone')
+      showError(tr(lang, 'Please check the number.', 'Number dobara dekhein.'), LINE.topupBad, 'phone')
     } else if (!Number.isInteger(value) || value <= 0 || value > balance) {
-      showError(ru ? 'Sahi raqam likhein.' : 'Please enter a valid amount.', LINE.amountBad, 'amount')
+      showError(tr(lang, 'Please enter a valid amount.', 'Sahi raqam likhein.'), LINE.amountBad, 'amount')
     } else {
       record(`Top-up ${TOPUP_NUMBER}`, value)
       setError('')
@@ -326,12 +326,12 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
       onClick={onRealWorld}
       className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-easy px-4 text-lg font-bold text-white transition hover:brightness-95"
     >
-      {ru ? 'Real World easypaisa try karein' : 'Try real world easypaisa'} <ArrowRight size={20} />
+      {tr(lang, 'Try real world easypaisa', 'Real World easypaisa try karein')} <ArrowRight size={20} />
     </button>
   )
-  const backHome = <Primary guide="dash-back" onClick={() => open('dash')}>{ru ? 'Wapas Dashboard' : 'Back to dashboard'}</Primary>
+  const backHome = <Primary guide="dash-back" onClick={() => open('dash')}>{tr(lang, 'Back to dashboard', 'Wapas Dashboard')}</Primary>
 
-  const helperTitle = ru ? 'Practice ki tafseelat' : 'Practice details'
+  const helperTitle = tr(lang, 'Practice details', 'Practice ki tafseelat')
   const showRecipient = stage.startsWith('send-') && stage !== 'send-done'
   const showBill = stage === 'bill-form' || stage === 'bill-details'
   const showPhone = stage === 'topup'
@@ -341,11 +341,11 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
       <header className="sticky top-0 z-10 bg-mz-dark text-white shadow">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-2">
           <button type="button" onClick={onExit} className="flex min-h-11 items-center gap-1 border-0 bg-transparent font-semibold text-white">
-            <ArrowLeft size={20} /> {ru ? 'Home' : 'Home'}
+            <ArrowLeft size={20} /> {tr(lang, 'Home', 'Home')}
           </button>
           <strong className="whitespace-nowrap text-mz-gold">Meezan Style<span className="hidden sm:inline"> Bank</span></strong>
           <span className="flex-none rounded-full bg-mz-gold px-2 py-0.5 text-sm font-bold whitespace-nowrap text-mz-dark">
-            {ru ? 'Sirf practice' : 'Practice only'}
+            {tr(lang, 'Practice only', 'Sirf practice')}
           </span>
         </div>
       </header>
@@ -383,7 +383,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
               <p className="text-stone-600">Assalam o Alaikum,</p>
               <h1 className="mb-3 text-2xl font-bold text-mz-dark">Saathi Practice</h1>
               <div className="rounded-2xl bg-gradient-to-br from-mz-dark to-mz-green p-5 text-white">
-                <p className="opacity-90">{ru ? 'Farzi balance' : 'Pretend balance'}</p>
+                <p className="opacity-90">{tr(lang, 'Pretend balance', 'Farzi balance')}</p>
                 <div className="flex items-center justify-between gap-2">
                   <strong className="text-3xl">{hidden ? 'Rs. ••••••' : money(balance)}</strong>
                   <button
@@ -425,7 +425,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
               </div>
               {activity.length > 0 && (
                 <section className="mt-4">
-                  <h3 className="font-bold">{ru ? 'Haal hi ki adaigiyan' : 'Recent payments'}</h3>
+                  <h3 className="font-bold">{tr(lang, 'Recent payments', 'Haal hi ki adaigiyan')}</h3>
                   {activity.map((item) => (
                     <p key={item.id} className="flex justify-between border-b border-stone-200 py-2">
                       <span>{item.title}</span>
@@ -439,7 +439,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
 
           {stage === 'send-bank' && (
             <>
-              <Heading title={ru ? 'Bank chunein' : 'Select destination bank'} onBack={() => open('dash')} />
+              <Heading title={tr(lang, 'Select destination bank', 'Bank chunein')} onBack={() => open('dash')} />
               <div className="grid gap-2">
                 {DESTINATIONS.map(([name, Icon], index) => (
                   <button
@@ -461,26 +461,26 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
 
           {stage === 'send-account' && (
             <>
-              <Heading title={`${ru ? 'IBAN likhein' : 'Enter IBAN'}: ${bank}`} onBack={() => open('send-bank')} />
+              <Heading title={`${tr(lang, 'Enter IBAN', 'IBAN likhein')}: ${bank}`} onBack={() => open('send-bank')} />
               <Field id="iban" label="IBAN" value={iban} clip={clip} error={error} onChange={(value) => { setIban(value); setError('') }} />
-              <Primary guide="iban-next" onClick={checkIban}>{ru ? 'Tasdeeq karein' : 'Verify account'}</Primary>
+              <Primary guide="iban-next" onClick={checkIban}>{tr(lang, 'Verify account', 'Tasdeeq karein')}</Primary>
             </>
           )}
 
           {stage === 'send-amount' && (
             <>
-              <Heading title={ru ? 'Raqam likhein' : 'Enter amount'} onBack={() => setStage('send-account')} />
+              <Heading title={tr(lang, 'Enter amount', 'Raqam likhein')} onBack={() => setStage('send-account')} />
               <p className="mb-3 flex items-center gap-2 rounded-xl bg-emerald-50 p-3 font-semibold text-mz-dark">
                 <CheckCircle2 size={20} /> {RECIPIENT.name}
               </p>
               <Field id="amount" label="Amount (Rs.)" mode="numeric" value={amount} error={error} onChange={(value) => { setAmount(value); setError('') }} />
-              <Primary guide="amount-next" onClick={checkAmount}>{ru ? 'Aage barhein' : 'Continue'}</Primary>
+              <Primary guide="amount-next" onClick={checkAmount}>{tr(lang, 'Continue', 'Aage barhein')}</Primary>
             </>
           )}
 
           {stage === 'send-review' && (
             <>
-              <Heading title={ru ? 'Dobara dekh lein' : 'Review transaction'} onBack={() => setStage('send-amount')} />
+              <Heading title={tr(lang, 'Review transaction', 'Dobara dekh lein')} onBack={() => setStage('send-amount')} />
               <p className="mb-4 rounded-2xl bg-stone-50 p-4 text-lg">
                 Sending <b>{money(Number(amount))}</b> to <b>{RECIPIENT.name}</b> from <b>Meezan Bank</b> to <b>{bank}</b>
               </p>
@@ -490,7 +490,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
 
           {stage === 'send-done' && (
             <Done
-              title={ru ? 'Paise bhej diye gaye' : 'Money sent'}
+              title={tr(lang, 'Money sent', 'Paise bhej diye gaye')}
               rows={[['To', RECIPIENT.name], ['Amount', money(Number(amount))], ['Bank', bank], ['Balance', money(balance)]]}
             >
               {realWorld}
@@ -552,7 +552,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
 
           {stage === 'bill-details' && (
             <>
-              <Heading title={ru ? 'Bill ki tafseel' : 'Bill details'} onBack={() => setStage('bill-form')} />
+              <Heading title={tr(lang, 'Bill details', 'Bill ki tafseel')} onBack={() => setStage('bill-form')} />
               <dl className="mb-4 rounded-2xl bg-stone-50 p-3">
                 {[
                   ['Consumer Name', RECIPIENT.name],
@@ -572,7 +572,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
 
           {stage === 'bill-done' && (
             <Done
-              title={ru ? 'Bill ada ho gaya' : 'Bill paid'}
+              title={tr(lang, 'Bill paid', 'Bill ada ho gaya')}
               rows={[['Company', bill.company], ['Invoice', bill.invoice], ['Amount', money(bill.amount)], ['Status', 'Paid'], ['Balance', money(balance)]]}
             >
               {realWorld}
@@ -590,7 +590,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
           )}
 
           {stage === 'topup-done' && (
-            <Done title={ru ? 'Top-up ho gaya' : 'Top-up done'} rows={[['Mobile', phone], ['Amount', money(Number(amount))], ['Balance', money(balance)]]}>
+            <Done title={tr(lang, 'Top-up done', 'Top-up ho gaya')} rows={[['Mobile', phone], ['Amount', money(Number(amount))], ['Balance', money(balance)]]}>
               {backHome}
             </Done>
           )}

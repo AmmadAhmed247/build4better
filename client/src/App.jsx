@@ -106,6 +106,10 @@ function App() {
     document.documentElement.style.fontSize = `${FONT_SCALES[fontStep]}%`
   }, [fontStep])
 
+  useEffect(() => {
+    document.documentElement.lang = lang === 'ur' ? 'ur' : 'en'
+  }, [lang])
+
   const update = useCallback((patch) => {
     setSaved((current) => {
       const next = { ...current, ...patch }
@@ -189,8 +193,9 @@ function App() {
       <main className="language">
         <div className="language-face"><AvatarFace /></div>
         <h1>Saathi</h1>
-        <p>{UI.chooseLanguage.ru} · {UI.chooseLanguage.en}</p>
+        <p>{UI.chooseLanguage.ru} · <span lang="ur">{UI.chooseLanguage.ur}</span> · {UI.chooseLanguage.en}</p>
         <button type="button" className="primary" onClick={() => chooseLanguage('ru')}>Roman Urdu</button>
+        <button type="button" className="primary" lang="ur" onClick={() => chooseLanguage('ur')}>اردو</button>
         <button type="button" className="primary" onClick={() => chooseLanguage('en')}>English</button>
       </main>
     )

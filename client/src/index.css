@@ -1053,3 +1053,50 @@ textarea:focus-visible {
     animation: none;
   }
 }
+
+/* Urdu script */
+html[lang='ur'] body {
+  font-family: 'Noto Nastaliq Urdu', 'Segoe UI', sans-serif;
+  line-height: 2;
+}
+
+html[lang='ur'] :is(p, h1, h2, h3, li, label, dt, dd):not(.phone *),
+html[lang='ur'] :is(.bubble, .dock-caption, .brief, .scam-flags, .task-strip, .reply) {
+  direction: rtl;
+}
+
+html[lang='ur'] :is(input, textarea) {
+  direction: auto;
+}
+
+html[lang='ur'] .phone {
+  line-height: 1.7;
+}
+
+html[lang='ur'] :is(.bubble, .dock-caption) {
+  line-height: 2;
+}
+
+html[lang='ur'] .dock-caption {
+  max-height: 104px;
+}
+
+/* Own camera preview */
+.self-view {
+  width: 150px;
+  height: 112px;
+  align-self: center;
+  border-radius: 12px;
+  background: #000;
+  object-fit: cover;
+  transform: scaleX(-1);
+}
+
+.self-view-note {
+  height: auto;
+  padding: 8px;
+  color: #fff;
+  font-size: 0.8rem;
+  text-align: center;
+  transform: none;
+}

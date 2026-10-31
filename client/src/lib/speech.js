@@ -1,8 +1,11 @@
+import { audioName } from './audioName.js'
+
 const synth = typeof window !== 'undefined' ? window.speechSynthesis : null
 const listeners = new Set()
 let voices = []
 let currentToken = 0
 let fallbackTimer = null
+let player = null
 
 function loadVoices() {
   voices = synth?.getVoices() ?? []
@@ -19,8 +22,10 @@ function setSpeaking(value) {
 
 function findVoice(prefixes) {
   for (const prefix of prefixes) {
-    const voice = voices.find((v) => v.lang.toLowerCase().replace('_', '-').startsWith(prefix))
-    if (voice) return voice
+    const matches = voices.filter((v) => v.lang.toLowerCase().replace('_', '-').startsWith(prefix))
+    // Neural voices sound far more natural than the older system ones.
+    const best = matches.find((v) => /natural|online|google/i.test(v.name)) ?? matches[0]
+    if (best) return best
   }
   return null
 }
@@ -43,32 +48,23 @@ export function subscribeSpeaking(fn) {
 export function stopSpeaking() {
   currentToken += 1
   clearTimeout(fallbackTimer)
+  player?.pause()
+  player = null
   synth?.cancel()
   setSpeaking(false)
 }
 
-export function speak(line, lang, onDone) {
-  stopSpeaking()
-  const token = currentToken
+function speakWithBrowser(line, lang, finish) {
   const { text, voice, code } = chooseVoice(line, lang)
-
-  const finish = () => {
-    if (token !== currentToken) return
-    clearTimeout(fallbackTimer)
-    setSpeaking(false)
-    onDone?.()
-  }
-
   // Keeps guided sequences moving if the browser cannot speak.
   const readingTime = Math.max(2500, text.length * 85)
-  fallbackTimer = setTimeout(finish, readingTime + 6000)
+  clearTimeout(fallbackTimer)
 
   if (!synth) {
-    clearTimeout(fallbackTimer)
     fallbackTimer = setTimeout(finish, readingTime)
     return
   }
-
+  fallbackTimer = setTimeout(finish, readingTime + 6000)
   const utterance = new SpeechSynthesisUtterance(text)
   utterance.lang = voice?.lang ?? code
   if (voice) utterance.voice = voice
@@ -77,4 +73,29 @@ export function speak(line, lang, onDone) {
   utterance.onerror = finish
   setSpeaking(true)
   synth.speak(utterance)
+}
+
+// Recorded lines come first. Live text, like AI answers, uses the browser voice.
+export function speak(line, lang, onDone) {
+  stopSpeaking()
+  const token = currentToken
+
+  const finish = () => {
+    if (token !== currentToken) return
+    clearTimeout(fallbackTimer)
+    setSpeaking(false)
+    onDone?.()
+  }
+  const useBrowser = () => {
+    if (token === currentToken) speakWithBrowser(line, lang, finish)
+  }
+
+  const voice = lang === 'en' ? 'en' : 'ur'
+  const audio = new Audio(`/audio/${audioName(voice, voice === 'en' ? line.en : line.ur)}.mp3`)
+  player = audio
+  audio.onended = finish
+  audio.onerror = useBrowser
+  audio.play().then(() => {
+    if (token === currentToken) setSpeaking(true)
+  }, useBrowser)
 }

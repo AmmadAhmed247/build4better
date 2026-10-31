@@ -16,7 +16,8 @@ import {
   sendSteps,
   SSGC,
   VOUCHER,
-} from './flows'
+} from './flows.js'
+import { addUrdu } from '../lib/i18n.js'
 
 // Every spoken line has English (en), Roman Urdu for screen (ru) and Urdu script for voice (ur).
 
@@ -24,6 +25,18 @@ export const WRONG_TAP = {
   en: 'That is not the one we need. No problem, nothing bad happened. Let us try again.',
   ru: 'Yeh woh nahi hai jo humein chahiye. Koi baat nahi, kuch kharab nahi hua. Dobara koshish karein.',
   ur: 'یہ وہ نہیں ہے جو ہمیں چاہیے۔ کوئی بات نہیں، کچھ خراب نہیں ہوا۔ دوبارہ کوشش کریں۔',
+}
+
+export const MUTE_LINE = {
+  en: 'This is the Mute button. Press it when you do not want them to hear you. Your voice will be switched off.',
+  ru: 'Yeh Mute button hai. Jab aap chahein ke woh aap ki awaaz na sunein, to isay dabayein. Aap ki awaaz band ho jayegi.',
+  ur: 'یہ میوٹ بٹن ہے۔ جب آپ چاہیں کہ وہ آپ کی آواز نہ سنیں، تو اسے دبائیں۔ آپ کی آواز بند ہو جائے گی۔',
+}
+
+export const UNMUTE_LINE = {
+  en: 'You are on mute, so they cannot hear you now. Press the same button again to Unmute and talk.',
+  ru: 'Aap mute par hain, ab woh aap ko nahi sun sakte. Baat karne ke liye yehi button dobara daba kar Unmute karein.',
+  ur: 'آپ میوٹ پر ہیں، اب وہ آپ کو نہیں سن سکتے۔ بات کرنے کے لیے یہی بٹن دوبارہ دبا کر ان میوٹ کریں۔',
 }
 
 export const LINES = {
@@ -51,6 +64,11 @@ export const LINES = {
     en: 'Remember, you can ask me anything. Just press here.',
     ru: 'Yaad rakhein, aap mujh se kuch bhi pooch sakte hain. Bas yahan dabayein.',
     ur: 'یاد رکھیں، آپ مجھ سے کچھ بھی پوچھ سکتے ہیں۔ بس یہاں دبائیں۔',
+  },
+  greeting: {
+    en: 'Hello! I am Saathi. Press the microphone and tell me what you need.',
+    ru: 'Assalam o Alaikum! Main Saathi hoon. Microphone dabayein aur batayein aap ko kya chahiye.',
+    ur: 'السلام علیکم! میں ساتھی ہوں۔ مائیکروفون دبائیں اور بتائیں آپ کو کیا چاہیے۔',
   },
   roundTwo: {
     en: 'Now you know the way. I will only speak this time.',
@@ -200,10 +218,24 @@ export const LESSONS = {
         screen: 'call-active',
         target: 'camera',
         say: {
-          en: 'They cannot see you yet. Press the camera button.',
-          ru: 'Woh aap ko abhi dekh nahi sakte. Camera ka button dabayein.',
-          ur: 'وہ آپ کو ابھی دیکھ نہیں سکتے۔ کیمرے کا بٹن دبائیں۔',
+          en: 'They cannot see you yet. Press the camera button. If your browser asks, press Allow.',
+          ru: 'Woh aap ko abhi dekh nahi sakte. Camera ka button dabayein. Browser pooche to Allow dabayein.',
+          ur: 'وہ آپ کو ابھی دیکھ نہیں سکتے۔ کیمرے کا بٹن دبائیں۔ براؤزر پوچھے تو الاؤ دبائیں۔',
         },
+      },
+      {
+        id: 'mute',
+        screen: 'call-camera',
+        target: 'mute',
+        sets: { muted: true },
+        say: MUTE_LINE,
+      },
+      {
+        id: 'unmute',
+        screen: 'call-camera',
+        target: 'mute',
+        sets: { muted: false },
+        say: UNMUTE_LINE,
       },
       {
         id: 'end',
@@ -434,3 +466,7 @@ export const UI = {
   example:
     'URGENT: Your account will be blocked today. Share your OTP now at http://bank-verify.xyz',
 }
+
+addUrdu(UI)
+addUrdu(LESSONS)
+addUrdu(SCAM)

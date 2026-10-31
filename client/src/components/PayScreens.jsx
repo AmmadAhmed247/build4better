@@ -1,4 +1,5 @@
 import Icon from './Icons'
+import { tr } from '../lib/i18n'
 
 const PAY_FROM = 'Rs.'
 
@@ -289,18 +290,17 @@ function IbanExplain({ lang }) {
         </p>
         <ul className="iban-key">
           <li><b>PK</b> Pakistan</li>
-          <li><b>00</b> {lang === 'ru' ? 'Check number' : 'Check digits'}</li>
-          <li><b>MEZN</b> {lang === 'ru' ? 'Bank ka code' : 'Bank code'}</li>
-          <li><b>16</b> {lang === 'ru' ? 'Account number' : 'Account number'}</li>
+          <li><b>00</b> {tr(lang, 'Check digits', 'Check number')}</li>
+          <li><b>MEZN</b> {tr(lang, 'Bank code', 'Bank ka code')}</li>
+          <li><b>16</b> {tr(lang, 'Account number', 'Account number')}</li>
         </ul>
-        <Tap id="iban-understood">{lang === 'ru' ? 'Samajh Gaya' : 'I understand'}</Tap>
+        <Tap id="iban-understood">{tr(lang, 'I understand', 'Samajh Gaya')}</Tap>
       </div>
     </div>
   )
 }
 
 function RaastExplain({ lang }) {
-  const ru = lang === 'ru'
   return (
     <div className="pay-page">
       <Head title="What is Raast?" />
@@ -308,14 +308,14 @@ function RaastExplain({ lang }) {
         <div className="raast-flow">
           <span><Icon name="wallet" size={26} /> easypaisa</span>
           <b><Icon name="flash" size={22} /></b>
-          <span><Icon name="bank" size={26} /> {ru ? 'Bank' : 'Bank'}</span>
+          <span><Icon name="bank" size={26} /> {tr(lang, 'Bank', 'Bank')}</span>
         </div>
         <ul className="iban-key">
-          <li><b>Raast</b> {ru ? 'State Bank ka nizam' : 'Run by the State Bank'}</li>
-          <li><b>{ru ? 'Tez' : 'Fast'}</b> {ru ? 'Seconds mein' : 'Arrives in seconds'}</li>
-          <li><b>Raast ID</b> {ru ? 'Aksar mobile number' : 'Often your mobile number'}</li>
+          <li><b>Raast</b> {tr(lang, 'Run by the State Bank', 'State Bank ka nizam')}</li>
+          <li><b>{tr(lang, 'Fast', 'Tez')}</b> {tr(lang, 'Arrives in seconds', 'Seconds mein')}</li>
+          <li><b>Raast ID</b> {tr(lang, 'Often your mobile number', 'Aksar mobile number')}</li>
         </ul>
-        <Tap id="raast-understood">{ru ? 'Samajh Gaya' : 'I understand'}</Tap>
+        <Tap id="raast-understood">{tr(lang, 'I understand', 'Samajh Gaya')}</Tap>
       </div>
     </div>
   )

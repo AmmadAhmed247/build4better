@@ -37,6 +37,21 @@ export const WA_LINES = {
     'Yeh practice computer hai. WhatsApp ka sabz icon click kar ke kholein.',
     'یہ پریکٹس کمپیوٹر ہے۔ واٹس ایپ کا سبز آئیکن کلک کر کے کھولیں۔',
   ),
+  phoneHome: T(
+    'This is a practice phone. Tap the green WhatsApp app to open it.',
+    'Yeh practice phone hai. WhatsApp ki sabz app par tap kar ke kholein.',
+    'یہ پریکٹس فون ہے۔ واٹس ایپ کی سبز ایپ پر ٹیپ کر کے کھولیں۔',
+  ),
+  wrongApp: T(
+    'That is a different app. No problem. Look for the green WhatsApp app.',
+    'Yeh koi aur app hai. Koi baat nahi. WhatsApp ki sabz app dhoondein.',
+    'یہ کوئی اور ایپ ہے۔ کوئی بات نہیں۔ واٹس ایپ کی سبز ایپ ڈھونڈیں۔',
+  ),
+  camera: T(
+    'Press the Camera button so they can see you. If your browser asks, press Allow.',
+    'Camera ka button dabayein taake woh aap ko dekh sakein. Browser pooche to Allow dabayein.',
+    'کیمرے کا بٹن دبائیں تاکہ وہ آپ کو دیکھ سکیں۔ براؤزر پوچھے تو الاؤ دبائیں۔',
+  ),
   wrongIcon: T(
     'That is a different program. No problem. Look for the green icon.',
     'Yeh koi aur program hai. Koi baat nahi. Sabz icon dhoondein.',

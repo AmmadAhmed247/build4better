@@ -1,9 +1,12 @@
 import {
   ArrowLeft,
+  BatteryFull,
+  Camera,
   CheckCheck,
   Folder,
   Globe,
   Mic,
+  MicOff,
   MessageCircle,
   Paperclip,
   Phone,
@@ -11,17 +14,35 @@ import {
   Play,
   Search,
   SendHorizontal,
+  Settings,
   Smile,
   Trash2,
   Video,
+  VideoOff,
+  Wifi,
   X,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import SelfView from './SelfView'
+import { MUTE_LINE, UNMUTE_LINE } from '../data/content'
 import { CHATS, WA_LINES as LINE } from '../data/whatsapp'
+import { tr } from '../lib/i18n'
 
 const MIN_RECORDING_MS = 1000
 const REPLY_DELAY_MS = 1800
 const CALL_STEPS_MS = [1600, 2200]
+const PHONE_BELOW = 768
+
+const PHONE_APPS = [
+  ['app-instagram', 'Instagram', 'bg-gradient-to-tr from-amber-500 via-pink-600 to-purple-700', Camera],
+  ['app-facebook', 'Facebook', 'bg-blue-600', 'f'],
+  ['wa-icon', 'WhatsApp', 'bg-[#00a884]', MessageCircle],
+  ['app-youtube', 'YouTube', 'bg-red-600', Play],
+  ['app-browser', 'Internet', 'bg-sky-500', Globe],
+  ['app-camera', 'Camera', 'bg-stone-700', Camera],
+  ['app-phone', 'Phone', 'bg-emerald-600', Phone],
+  ['app-settings', 'Settings', 'bg-slate-500', Settings],
+]
 
 function clock() {
   return new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
@@ -60,7 +81,7 @@ function Bubble({ message }) {
   )
 }
 
-function CallModal({ call, chat, seconds, onEnd }) {
+function CallModal({ call, chat, seconds, lang, onMute, onCamera, onEnd }) {
   const label = { calling: 'Calling...', ringing: 'Ringing...', connected: duration(seconds) }[call.phase]
   return (
     <div className="fade-up absolute inset-0 z-10 flex flex-col items-center justify-between bg-[#0b141a] p-6 text-white">
@@ -72,18 +93,40 @@ function CallModal({ call, chat, seconds, onEnd }) {
           {call.video ? <Video size={22} /> : <Phone size={22} />} {call.video ? 'Video call' : 'Voice call'}
         </p>
       </div>
-      {call.video && call.phase === 'connected' && (
-        <div className="grid h-24 w-36 place-items-center rounded-xl bg-stone-700 text-lg">You</div>
-      )}
-      <button
-        type="button"
-        aria-label="End call"
-        data-guide="wa-end"
-        onClick={onEnd}
-        className="mb-4 grid size-20 place-items-center rounded-full border-0 bg-red-600 text-white transition hover:bg-red-700"
-      >
-        <PhoneOff size={34} />
-      </button>
+      {call.camera && <SelfView lang={lang} className="h-32 w-44 rounded-xl bg-black object-cover -scale-x-100 p-1 text-center text-base" />}
+      <div className="mb-4 flex items-start gap-4">
+        <button
+          type="button"
+          data-guide="wa-mute"
+          disabled={call.phase !== 'connected'}
+          onClick={onMute}
+          className={`grid size-20 place-items-center rounded-full border-0 text-sm font-bold disabled:opacity-40 ${call.muted ? 'bg-amber-500 text-black' : 'bg-white text-black'}`}
+        >
+          {call.muted ? <MicOff size={26} /> : <Mic size={26} />}
+          {call.muted ? 'Unmute' : 'Mute'}
+        </button>
+        {call.video && (
+          <button
+            type="button"
+            data-guide="wa-camera"
+            disabled={call.phase !== 'connected'}
+            onClick={onCamera}
+            className="grid size-20 place-items-center rounded-full border-0 bg-white text-sm font-bold text-black disabled:opacity-40"
+          >
+            {call.camera ? <VideoOff size={26} /> : <Video size={26} />}
+            Camera
+          </button>
+        )}
+        <button
+          type="button"
+          aria-label="End call"
+          data-guide="wa-end"
+          onClick={onEnd}
+          className="grid size-20 place-items-center rounded-full border-0 bg-red-600 text-white transition hover:bg-red-700"
+        >
+          <PhoneOff size={34} />
+        </button>
+      </div>
     </div>
   )
 }
@@ -104,10 +147,10 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
   const [typing, setTyping] = useState(false)
   const [call, setCall] = useState(null)
   const [callSeconds, setCallSeconds] = useState(0)
+  const [phone, setPhone] = useState(window.innerWidth < PHONE_BELOW)
   const recordStart = useRef(0)
   const replyTimer = useRef(null)
   const endRef = useRef(null)
-  const ru = lang === 'ru'
 
   const active = chats.find((chat) => chat.id === activeId)
   const hasText = Boolean(draft.trim())
@@ -117,15 +160,19 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
     let target = null
     let tone
     if (!open) {
-      line = wrongIcon ? LINE.wrongIcon : LINE.desktop
+      if (phone) line = wrongIcon ? LINE.wrongApp : LINE.phoneHome
+      else line = wrongIcon ? LINE.wrongIcon : LINE.desktop
       target = wrongIcon ?? 'wa-icon'
       tone = wrongIcon ? 'error' : undefined
     } else if (mistake) {
       ;({ line, target } = mistake)
       tone = 'error'
     } else if (call) {
-      line = call.phase === 'connected' ? LINE.connected : LINE.calling
-      target = 'wa-end'
+      if (call.phase !== 'connected') [line, target] = [LINE.calling, 'wa-end']
+      else if (call.video && !call.camera && !call.cameraSeen) [line, target] = [LINE.camera, 'wa-camera']
+      else if (call.muted) [line, target] = [UNMUTE_LINE, 'wa-mute']
+      else if (!call.muteSeen) [line, target] = [MUTE_LINE, 'wa-mute']
+      else [line, target] = [LINE.connected, 'wa-end']
     } else if (flow === 'text') {
       if (!focused && !hasText) [line, target] = [LINE.clickBox, 'wa-input']
       else if (!hasText) [line, target] = [LINE.typeNow, 'wa-input']
@@ -138,7 +185,13 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
       line = flow === 'done' ? LINE.done : LINE.menu
     }
     setGuide({ line, target, tone })
-  }, [open, wrongIcon, mistake, call?.phase, flow, focused, hasText, recording, setGuide, call])
+  }, [open, phone, wrongIcon, mistake, flow, focused, hasText, recording, setGuide, call])
+
+  useEffect(() => {
+    const onResize = () => setPhone(window.innerWidth < PHONE_BELOW)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
@@ -243,7 +296,15 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
   function startCall(video) {
     setCallSeconds(0)
     setMistake(null)
-    setCall({ video, phase: 'calling' })
+    setCall({ video, phase: 'calling', muted: false, camera: false })
+  }
+
+  function toggleMute() {
+    setCall((current) => ({ ...current, muted: !current.muted, muteSeen: current.muteSeen || current.muted }))
+  }
+
+  function toggleCamera() {
+    setCall((current) => ({ ...current, camera: !current.camera, cameraSeen: true }))
   }
 
   function endCall() {
@@ -268,9 +329,9 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
 
   const filtered = chats.filter((chat) => chat.name.toLowerCase().includes(query.trim().toLowerCase()))
   const lessons = [
-    ['text', ru ? 'Message likhna' : 'Text message'],
-    ['voice', ru ? 'Voice note' : 'Voice note'],
-    ['calls', ru ? 'Call karna' : 'Calls'],
+    ['text', tr(lang, 'Text message', 'Message likhna')],
+    ['voice', tr(lang, 'Voice note', 'Voice note')],
+    ['calls', tr(lang, 'Calls', 'Call karna')],
   ]
   const lastText = (chat) => {
     const last = chat.messages.at(-1)
@@ -282,10 +343,54 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
     <main className="min-h-0 flex-1 overflow-y-auto bg-stone-200 p-2 pb-32 text-stone-900 lg:p-4 lg:pb-4">
       <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[1fr_280px]">
         <div className="relative flex h-[calc(100dvh-9.5rem)] min-h-[440px] flex-col overflow-hidden rounded-2xl border border-stone-400 bg-white shadow-lg lg:h-[calc(100dvh-2rem)]">
-          {!open && (
+          {!open && phone && (
+            <div className="flex flex-1 flex-col bg-gradient-to-b from-indigo-900 via-purple-800 to-rose-700 text-white">
+              <div className="flex items-center justify-between px-4 py-2 text-base font-semibold">
+                <span>{clock()}</span>
+                <span className="flex items-center gap-2">
+                  <Wifi size={18} /> <BatteryFull size={20} />
+                </span>
+              </div>
+              <span className="mx-auto mb-3 rounded-full bg-mz-gold px-3 py-1 font-bold text-mz-dark">
+                {tr(lang, 'Practice only', 'Sirf practice')}
+              </span>
+              <div className="grid grid-cols-4 gap-x-2 gap-y-5 px-3">
+                {PHONE_APPS.map(([id, label, tone, Mark]) => (
+                  <button
+                    type="button"
+                    key={id}
+                    data-guide={id}
+                    onClick={() => {
+                      if (id !== 'wa-icon') {
+                        setWrongIcon(id)
+                        return
+                      }
+                      setWrongIcon(null)
+                      setOpen(true)
+                    }}
+                    className="grid justify-items-center gap-1 border-0 bg-transparent p-0 text-sm font-medium text-white"
+                  >
+                    <span className={`grid size-15 place-items-center rounded-2xl text-3xl font-bold shadow ${tone}`}>
+                      {typeof Mark === 'string' ? Mark : <Mark size={32} fill={id === 'wa-icon' ? 'white' : 'none'} />}
+                    </span>
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={onExit}
+                className="mx-auto mt-auto mb-3 flex min-h-12 items-center gap-1 rounded-full border-0 bg-black/40 px-5 text-lg font-semibold text-white"
+              >
+                <ArrowLeft size={20} /> {tr(lang, 'Home', 'Home')}
+              </button>
+            </div>
+          )}
+
+          {!open && !phone && (
             <div className="relative flex flex-1 flex-col bg-gradient-to-br from-sky-700 to-teal-800">
               <span className="absolute top-3 right-3 rounded-full bg-mz-gold px-3 py-1 font-bold text-mz-dark">
-                {ru ? 'Sirf practice' : 'Practice only'}
+                {tr(lang, 'Practice only', 'Sirf practice')}
               </span>
               <div className="flex flex-1 flex-col flex-wrap content-start gap-3 p-4">
                 <button
@@ -327,7 +432,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                   onClick={onExit}
                   className="flex min-h-11 items-center gap-1 border-0 bg-transparent text-lg font-semibold text-white"
                 >
-                  <ArrowLeft size={20} /> {ru ? 'Home' : 'Home'}
+                  <ArrowLeft size={20} /> {tr(lang, 'Home', 'Home')}
                 </button>
                 <span className="text-lg">{clock()}</span>
               </div>
@@ -396,7 +501,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                         </span>
                       </button>
                     ))}
-                    {filtered.length === 0 && <p className="p-4 text-lg">{ru ? 'Koi chat nahi mili' : 'No chats found'}</p>}
+                    {filtered.length === 0 && <p className="p-4 text-lg">{tr(lang, 'No chats found', 'Koi chat nahi mili')}</p>}
                   </div>
                 </aside>
 
@@ -525,7 +630,17 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                   </form>
                 </section>
 
-                {call && <CallModal call={call} chat={active} seconds={callSeconds} onEnd={endCall} />}
+                {call && (
+                  <CallModal
+                    call={call}
+                    chat={active}
+                    seconds={callSeconds}
+                    lang={lang}
+                    onMute={toggleMute}
+                    onCamera={toggleCamera}
+                    onEnd={endCall}
+                  />
+                )}
               </div>
             </div>
           )}
