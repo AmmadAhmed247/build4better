@@ -4,6 +4,7 @@ const fs = require('fs')
 const express = require('express')
 const { ApiError, GoogleGenAI, Type } = require('@google/genai')
 const { MsEdgeTTS, OUTPUT_FORMAT } = require('msedge-tts')
+const { askChat, hasChatProvider } = require('./chatService')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -11,7 +12,6 @@ const PORT = process.env.PORT || 3001
 const MODELS = (process.env.GEMINI_MODELS || 'gemini-flash-lite-latest,gemini-flash-latest,gemini-3.8-flash').split(',')
 const REQUEST_TIMEOUT_MS = 10000
 const MAX_TEXT = 4000
-const MAX_HISTORY = 10
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_SPEECH_TEXT = 1500
 const SPEECH_TIMEOUT_MS = 15000
@@ -98,18 +98,6 @@ const SCRIPT_RULES = {
   en: 'Write transcript, reply and speech in English.',
 }
 
-const REPLY_SCHEMA = {
-  type: Type.OBJECT,
-  properties: {
-    kind: { type: Type.STRING, enum: ['answer', 'scam_check'] },
-    risk: { type: Type.STRING, enum: ['danger', 'careful', 'none'] },
-    reply: { type: Type.STRING },
-    warning_signs: { type: Type.ARRAY, items: { type: Type.STRING } },
-    next_step: { type: Type.STRING },
-  },
-  required: ['kind', 'risk', 'reply', 'warning_signs', 'next_step'],
-}
-
 const GUIDE_FEATURES = {
   none: 'No feature fits the request',
   scam: 'Scam Detector: check a strange message',
@@ -188,29 +176,12 @@ async function recordSpeech(voice, text) {
   throw lastError
 }
 
-function buildContents({ message, history, image }) {
-  const past = (Array.isArray(history) ? history : [])
-    .filter((m) => ['user', 'assistant'].includes(m?.role) && typeof m.text === 'string' && m.text)
-    .slice(-MAX_HISTORY)
-    .map((m) => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.text.slice(0, MAX_TEXT) }],
-    }))
-  // The API expects the conversation to open with the user.
-  while (past[0]?.role === 'model') past.shift()
-
-  const parts = []
-  if (image) parts.push({ inlineData: { mimeType: image.mediaType, data: image.data } })
-  parts.push({ text: message || 'Please check this picture for scam warning signs.' })
-  return [...past, { role: 'user', parts }]
-}
-
 app.use(express.json({ limit: '8mb' }))
 
-app.get('/api/health', (req, res) => res.json({ ai: Boolean(client) }))
+app.get('/api/health', (req, res) => res.json({ ai: hasChatProvider() }))
 
 app.post('/api/ask', async (req, res) => {
-  if (!client) return res.status(503).json({ error: 'no_api_key' })
+  if (!hasChatProvider()) return res.status(503).json({ error: 'no_api_key' })
 
   const { message = '', lang, image, history } = req.body || {}
   if (typeof message !== 'string' || message.length > MAX_TEXT) {
@@ -221,26 +192,17 @@ app.post('/api/ask', async (req, res) => {
     return res.status(400).json({ error: 'bad_image' })
   }
 
-  try {
-    const response = await generate({
-      contents: buildContents({ message, history, image }),
-      config: {
-        systemInstruction: `${SYSTEM}\n\nReply language: ${replyLanguage(lang)}.`,
-        responseMimeType: 'application/json',
-        responseSchema: REPLY_SCHEMA,
-      },
-    })
-    if (!response.text) return res.status(502).json({ error: 'empty_reply' })
-    res.json(JSON.parse(response.text))
-  } catch (err) {
-    if (err instanceof ApiError && [401, 403].includes(err.status)) {
-      console.error('Gemini API key was rejected')
-      return res.status(503).json({ error: 'bad_api_key' })
-    }
-    if (err instanceof ApiError && err.status === 429) return res.status(429).json({ error: 'rate_limited' })
-    console.error('Ask failed:', err.message)
-    res.status(502).json({ error: 'ai_failed' })
-  }
+  const { answer, status } = await askChat({
+    system: `${SYSTEM}\n\nReply language: ${replyLanguage(lang)}.`,
+    models: MODELS,
+    history,
+    message,
+    text: message || 'Please check this picture for scam warning signs.',
+    image,
+  })
+  if (answer) return res.json(answer)
+  if (status === 429) return res.status(429).json({ error: 'rate_limited' })
+  res.status(502).json({ error: 'ai_failed' })
 })
 
 // Understands a spoken or typed request and says how to do it in the app.
