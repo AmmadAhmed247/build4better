@@ -109,6 +109,7 @@ export default function AskSaathi({ lang, onOpenLesson }) {
   }, [])
 
   useEffect(() => {
+    if (items.length === 0) return
     // Starts at the top of the newest item so the risk heading is always seen.
     endRef.current?.previousElementSibling?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [items, busy])
