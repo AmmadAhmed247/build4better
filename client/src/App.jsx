@@ -1,13 +1,28 @@
+import { Camera, CreditCard, MessageCircle, MessagesSquare, Search, Sparkles, Video } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import AskSaathi from './components/AskSaathi'
 import Avatar, { AvatarFace } from './components/Avatar'
+import BankSim from './components/BankSim'
+import Dashboard from './components/Dashboard'
 import Icon from './components/Icons'
 import LessonRunner from './components/LessonRunner'
+import WhatsAppSim from './components/WhatsAppSim'
 import { LESSONS, LINES, PRACTICE, TIPS, UI } from './data/content'
 import { speak, stopSpeaking } from './lib/speech'
 import { loadState, saveState } from './lib/storage'
 
 const ASK_HINT_DELAY_MS = 30000
+const FONT_SCALES = [100, 115, 130]
+
+const FEATURES = [
+  ['lessons', CreditCard, UI.featureLessons],
+  ['whatsapp', MessagesSquare, { en: 'WhatsApp', ru: 'WhatsApp' }],
+  ['video', Video, LESSONS.video.title],
+  ['screenshot', Camera, LESSONS.screenshot.title],
+  ['google', Search, LESSONS.google.title],
+  ['ai', Sparkles, LESSONS.ai.title],
+  ['ask', MessageCircle, UI.ask],
+]
 
 const INTRO = [
   { line: LINES.welcome, target: null },
@@ -69,6 +84,7 @@ function App() {
   const [active, setActive] = useState(null)
   const [guide, setGuideState] = useState(null)
   const introRunning = useRef(false)
+  const fontStep = saved.fontStep ?? 0
   const hintShown = useRef(false)
   const introPlayed = useRef(Boolean(saved.introSeen))
 
@@ -85,6 +101,10 @@ function App() {
     speak(guide.line, lang, guide.onDone)
     return stopSpeaking
   }, [guide, lang])
+
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${FONT_SCALES[fontStep]}%`
+  }, [fontStep])
 
   const update = useCallback((patch) => {
     setSaved((current) => {
@@ -141,13 +161,18 @@ function App() {
 
   function startLesson(id, round) {
     setGuide(null)
-    setActive({ id, round, run: Math.random() })
+    setActive((current) => ({ id, round, run: (current?.run ?? 0) + 1 }))
     setView('lesson')
   }
 
   function exitLesson(nextRound) {
     if (nextRound) startLesson(active.id, nextRound)
-    else go(LESSONS[active.id].kind === 'tip' ? 'tips' : 'home')
+    else go({ tip: 'tips', practice: 'lessons' }[LESSONS[active.id].kind] ?? 'home')
+  }
+
+  function openFeature(key) {
+    if (['lessons', 'ask', 'whatsapp'].includes(key)) go(key)
+    else startLesson(key, 1)
   }
 
   function recordResult(result) {
@@ -187,23 +212,43 @@ function App() {
       )}
 
       {view === 'home' && (
+        <Dashboard
+          lang={lang}
+          fontStep={fontStep}
+          fontSteps={FONT_SCALES.length}
+          familyNumber={saved.familyNumber}
+          features={FEATURES}
+          onFontStep={(step) => update({ fontStep: step })}
+          onSaveNumber={(familyNumber) => update({ familyNumber })}
+          onLanguage={() => go('language')}
+          onBank={() => go('bank')}
+          onScenario={() => startLesson('scenario', 3)}
+          onFeature={openFeature}
+        />
+      )}
+
+      {view === 'lessons' && (
         <main className="page">
           <header className="page-head">
-            <h1>{UI.homeTitle[lang]}</h1>
-            <button type="button" className="text-button" onClick={() => go('language')}>{UI.language[lang]}</button>
+            <h1>{UI.lessonsTitle[lang]}</h1>
+            <button type="button" className="text-button" onClick={() => go('home')}>{UI.back[lang]}</button>
           </header>
-          <p className="lead">{UI.homeLead[lang]}</p>
-          <button type="button" className="scenario-card" data-guide="scenario" onClick={() => startLesson('scenario', 3)}>
-            <img src="/brands/easypaisa.png" alt="" />
-            <span>
-              <strong>{UI.scenarioButton[lang]}</strong>
-              <small>{UI.scenarioLead[lang]}</small>
-            </span>
-          </button>
+          <p className="lead">{UI.lessonsLead[lang]}</p>
           {PRACTICE.map((id) => (
             <LessonCard key={id} lesson={LESSONS[id]} lang={lang} progress={saved.progress} onStart={startLesson} />
           ))}
         </main>
+      )}
+
+      {view === 'whatsapp' && <WhatsAppSim lang={lang} setGuide={setGuide} onExit={() => go('home')} />}
+
+      {view === 'bank' && (
+        <BankSim
+          lang={lang}
+          setGuide={setGuide}
+          onExit={() => go('home')}
+          onRealWorld={() => startLesson('scenario', 3)}
+        />
       )}
 
       {view === 'tips' && (
@@ -218,7 +263,7 @@ function App() {
 
       {view === 'ask' && <AskSaathi lang={lang} onOpenLesson={(id) => startLesson(id, 1)} />}
 
-      {view !== 'lesson' && (
+      {!['lesson', 'bank', 'whatsapp'].includes(view) && (
         <nav className="nav">
           {[
             ['home', 'nav-practice', UI.practice],
@@ -238,8 +283,8 @@ function App() {
         </nav>
       )}
 
-      {view !== 'ask' && (
-        <Avatar guide={guide} lang={lang} onSkip={endIntro} dock={view === 'lesson'} />
+      {view !== 'ask' && (view !== 'home' || guide?.line) && (
+        <Avatar guide={guide} lang={lang} onSkip={endIntro} />
       )}
     </div>
   )

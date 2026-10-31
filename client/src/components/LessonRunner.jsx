@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { LINES, SCAM, UI, WRONG_TAP } from '../data/content'
+import { useWide } from './Avatar'
 import { SCREENS } from './Screens'
 
 const ERROR_HOLD_MS = 5500
@@ -76,6 +77,7 @@ export default function LessonRunner({ lesson, round, lang, setGuide, guide, onE
   const [scam, setScam] = useState(null)
   const [spent, setSpent] = useState(0)
   const errorTimer = useRef(null)
+  const wide = useWide()
   const showIntro = useRef(round > 1)
 
   const step = lesson.steps[stepIndex]
@@ -83,7 +85,7 @@ export default function LessonRunner({ lesson, round, lang, setGuide, guide, onE
   const hasScam = lesson.ambushAfter && round > 1
 
   function showStep(level = round) {
-    if (level === 1) setGuide({ line: step.say, target: step.target, anchor: step.submit })
+    if (level === 1) setGuide({ line: step.say, target: step.target })
     else if (level === 2) setGuide({ line: step.say, target: null })
     else setGuide(null)
   }
@@ -138,7 +140,7 @@ export default function LessonRunner({ lesson, round, lang, setGuide, guide, onE
   function showError(key, line) {
     clearTimeout(errorTimer.current)
     setMistakes((count) => count + 1)
-    setGuide({ line, target: key, anchor: key === step.target ? step.submit : undefined, tone: 'error' })
+    setGuide({ line, target: key, tone: 'error' })
     errorTimer.current = setTimeout(() => showStep(), ERROR_HOLD_MS)
   }
 
@@ -225,7 +227,8 @@ export default function LessonRunner({ lesson, round, lang, setGuide, guide, onE
     )
   }
 
-  const caption = guide?.line && !guide.target ? guide.line[lang] : ''
+  // On wide screens a targeted line shows in the bubble beside the phone instead.
+  const caption = guide?.line && (!guide.target || !wide) ? guide.line[lang] : ''
 
   return (
     <main className="lesson">
@@ -288,7 +291,7 @@ export default function LessonRunner({ lesson, round, lang, setGuide, guide, onE
       </div>
       <footer className="dock">
         <div className="dock-avatar" data-guide="dock-avatar" />
-        <p className="dock-caption" aria-live="polite">{caption}</p>
+        <p className={caption && guide?.tone === 'error' ? 'dock-caption dock-caption-error' : 'dock-caption'} aria-live="polite">{caption}</p>
         <div className="dock-actions">
           <button
             type="button"

@@ -75,7 +75,7 @@ function ShotPhone({ taken }) {
 
 function GoogleBox({ children }) {
   return (
-    <div className="g-box">
+    <div className="g-box" data-ring>
       <Icon name="plus" size={20} />
       {children}
       <Icon name="mic" size={20} />

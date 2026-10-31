@@ -1,0 +1,27 @@
+/* No Preflight: the older screens rely on their own base styles. */
+@import 'tailwindcss/theme.css';
+@import 'tailwindcss/utilities.css';
+
+@theme {
+  --color-mz-dark: #08432c;
+  --color-mz-green: #0b6b45;
+  --color-mz-gold: #d4af37;
+  --color-easy: #00a84d;
+}
+
+.fade-up {
+  animation: fade-up 0.25s ease-out;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-up {
+    animation: none;
+  }
+}

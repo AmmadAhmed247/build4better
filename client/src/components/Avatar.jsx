@@ -3,17 +3,18 @@ import { subscribeSpeaking } from '../lib/speech'
 import { UI } from '../data/content'
 
 const SIZE = 76
-const GAP = 10
+const SMALL = 56
+const GAP = 8
 const EDGE = 16
+const WIDE_FROM = 1024
 
 function clamp(value, min, max) {
   return Math.min(Math.max(value, min), Math.max(min, max))
 }
 
-export function AvatarFace({ speaking, pointing }) {
+export function AvatarFace({ speaking }) {
   return (
     <svg viewBox="0 0 100 100" className={speaking ? 'face is-speaking' : 'face'} aria-hidden="true">
-      {pointing && <path className="face-pointer" d="M50 0 L60 14 L40 14 Z" />}
       <path className="face-body" d="M18 100 C18 74 32 66 50 66 C68 66 82 74 82 100 Z" />
       <circle className="face-skin" cx="50" cy="44" r="29" />
       <path className="face-hair" d="M21 44 C20 16 80 16 79 44 C70 31 58 28 50 33 C42 28 30 31 21 44 Z" />
@@ -35,90 +36,146 @@ export function useSpeaking() {
   return speaking
 }
 
+export function useWide() {
+  const [wide, setWide] = useState(window.innerWidth >= WIDE_FROM)
+  useEffect(() => {
+    const onResize = () => setWide(window.innerWidth >= WIDE_FROM)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  return wide
+}
+
 function findTarget(key) {
   return key ? document.querySelector(`[data-guide="${key}"]`) : null
 }
 
-function toBox(rect) {
-  return { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom, width: rect.width, height: rect.height }
+function toBox(element) {
+  if (!element) return null
+  const { left, top, right, bottom, width, height } = element.getBoundingClientRect()
+  const follow = 'follow' in element.dataset
+  return width > 0 ? { left, top, right, bottom, width, height, follow } : null
 }
 
-// Walks to the highlighted element, standing below it unless there is no room.
-export default function Avatar({ guide, lang, onSkip, dock }) {
+function measure(targetKey) {
+  const element = findTarget(targetKey)
+  return {
+    // Some inputs sit inside a bigger visible box, so ring that box.
+    target: toBox(element?.closest('[data-ring]') ?? element),
+    phone: toBox(element?.closest('.phone')),
+    dock: toBox(findTarget('dock-avatar')),
+    slot: toBox(findTarget('side-slot')),
+    nav: toBox(findTarget('nav-tips')),
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }
+}
+
+// Avatar and bubble stay clear of the app: beside it on wide screens, in a corner on phones.
+function place({ target, phone, dock, slot, nav, width, height }, bubbleHeight) {
+  const wide = width >= WIDE_FROM
+
+  // Some screens fill the page, so the avatar walks over while the text stays in the side column.
+  if (wide && slot && slot.follow) {
+    const bubble = { left: slot.left, top: slot.top, width: slot.width }
+    if (!target) return { size: SIZE, x: slot.left, y: slot.top + bubbleHeight + GAP, bubble }
+    return {
+      size: SMALL,
+      x: clamp(target.right - SMALL + 8, 4, width - SMALL - 4),
+      y: Math.max(4, target.top - SMALL + 16),
+      bubble,
+    }
+  }
+  if (wide && slot) {
+    return {
+      size: SIZE,
+      x: slot.left,
+      y: slot.top,
+      bubble: { left: slot.left + SIZE + GAP, top: slot.top, width: slot.width - SIZE - GAP },
+    }
+  }
+  if (wide && phone && target) {
+    const x = phone.right + 14
+    const y = clamp(target.top + target.height / 2 - SIZE / 2, GAP, height - SIZE - GAP)
+    const left = x + SIZE + GAP
+    return {
+      size: SIZE,
+      x,
+      y,
+      bubble: {
+        left,
+        top: clamp(y, GAP, height - bubbleHeight - GAP),
+        width: clamp(width - left - EDGE, 180, 340),
+      },
+    }
+  }
+
+  const floor = nav ? nav.top - GAP * 2 : height - GAP
+  const bubble = {
+    left: clamp((width - Math.min(340, width - EDGE * 2)) / 2, EDGE, width),
+    top: floor - bubbleHeight - GAP,
+    width: Math.min(340, width - EDGE * 2),
+  }
+
+  if (target) {
+    return {
+      size: SMALL,
+      x: clamp(target.right - SMALL + 8, 4, width - SMALL - 4),
+      y: Math.max(4, target.top - SMALL + 16),
+      bubble: dock ? null : bubble,
+    }
+  }
+  if (dock) return { size: SIZE, x: dock.left, y: dock.top, bubble: null }
+  return { size: SIZE, x: width - SIZE - EDGE, y: bubble.top - SIZE - 4, bubble }
+}
+
+export default function Avatar({ guide, lang, onSkip }) {
   const speaking = useSpeaking()
   const bubbleRef = useRef(null)
-  const [box, setBox] = useState(null)
-  const [anchorBox, setAnchorBox] = useState(null)
-  const [dockBox, setDockBox] = useState(null)
-  const [viewport, setViewport] = useState({ width: window.innerWidth, height: window.innerHeight })
+  const [layout, setLayout] = useState(() => measure(null))
   const [bubbleHeight, setBubbleHeight] = useState(100)
   const target = guide?.target
-  const anchor = guide?.anchor
 
-  useLayoutEffect(() => {
-    const measure = () => {
-      const element = findTarget(target)
-      setBox(element ? toBox(element.getBoundingClientRect()) : null)
-      // A form field's button sits right below it, so stand under the button instead.
-      const anchorElement = findTarget(anchor)
-      setAnchorBox(anchorElement ? toBox(anchorElement.getBoundingClientRect()) : null)
-      const dockElement = dock ? findTarget('dock-avatar') : null
-      setDockBox(dockElement ? toBox(dockElement.getBoundingClientRect()) : null)
-      setViewport({ width: window.innerWidth, height: window.innerHeight })
-    }
+  useEffect(() => {
     findTarget(target)?.scrollIntoView({ block: 'nearest' })
-    measure()
-    window.addEventListener('resize', measure)
-    window.addEventListener('scroll', measure, true)
-    return () => {
-      window.removeEventListener('resize', measure)
-      window.removeEventListener('scroll', measure, true)
+  }, [target, guide])
+
+  // Tracks every frame, because animations and images keep moving things after a render.
+  useEffect(() => {
+    let frame
+    const tick = () => {
+      const next = measure(target)
+      setLayout((current) => (JSON.stringify(current) === JSON.stringify(next) ? current : next))
+      frame = requestAnimationFrame(tick)
     }
-  }, [target, anchor, dock, guide])
+    tick()
+    return () => cancelAnimationFrame(frame)
+  }, [target])
 
   useLayoutEffect(() => {
     if (bubbleRef.current) setBubbleHeight(bubbleRef.current.offsetHeight)
-  }, [guide, viewport])
+  }, [guide, layout])
 
-  const bubbleWidth = Math.min(340, viewport.width - EDGE * 2)
-  let x = viewport.width - SIZE - EDGE
-  let y = viewport.height - SIZE - 104
-  let bubbleTop = y - bubbleHeight - 6
-  let bubbleLeft = viewport.width - bubbleWidth - EDGE
-
-  if (box) {
-    const stand = anchorBox ?? box
-    // The lesson dock holds Help me, so the avatar never covers it.
-    const floor = dockBox ? dockBox.top : viewport.height
-    const fitsBelow = stand.bottom + GAP + SIZE + bubbleHeight + 14 < floor
-    x = clamp(stand.left + stand.width / 2 - SIZE / 2, 8, viewport.width - SIZE - 8)
-    y = fitsBelow ? stand.bottom + GAP : Math.max(8, box.top - SIZE - GAP)
-    bubbleTop = fitsBelow ? y + SIZE + 6 : Math.max(8, y - bubbleHeight - 6)
-    bubbleLeft = clamp(x + SIZE / 2 - bubbleWidth / 2, EDGE, viewport.width - bubbleWidth - EDGE)
-  } else if (dockBox) {
-    x = dockBox.left
-    y = dockBox.top
-  }
-
+  const { size, x, y, bubble } = place(layout, bubbleHeight)
   const tone = guide?.tone === 'error' ? 'error' : 'guide'
-  const showBubble = guide?.line && (box || !dockBox)
+  const ring = layout.target
 
   return (
     <>
-      {box && (
+      {ring && (
         <div
           className={`spotlight spotlight-${tone}`}
-          style={{ left: box.left - 6, top: box.top - 6, width: box.width + 12, height: box.height + 12 }}
+          style={{ left: ring.left - 3, top: ring.top - 3, width: ring.width + 6, height: ring.height + 6 }}
         />
       )}
-      <div className="avatar" style={{ transform: `translate(${x}px, ${y}px)` }}>
-        <AvatarFace speaking={speaking} pointing={Boolean(box)} />
+      <div className="avatar" style={{ width: size, height: size, transform: `translate(${x}px, ${y}px)` }}>
+        <AvatarFace speaking={speaking} />
       </div>
-      {showBubble && (
+      {guide?.line && bubble && (
         <div
           ref={bubbleRef}
           className={`bubble bubble-${tone}`}
-          style={{ left: bubbleLeft, top: bubbleTop, width: bubbleWidth }}
+          style={bubble}
           role="status"
           aria-live="polite"
         >
