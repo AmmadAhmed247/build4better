@@ -6,6 +6,15 @@ import { speak } from '../lib/speech'
 
 const MAX_IMAGE_SIDE = 1280
 
+const STARTER_QUESTIONS = [
+  'OTP kya hota hai?',
+  'Technology kya hai?',
+  'Scam message ki pehchan kya hai?',
+  'Video call kaise karun?',
+  'Screenshot kaise lete hain?',
+  'Online payment kaise karun?',
+]
+
 // Shrinks phone photos so they stay under the API image limit.
 function readImage(file) {
   return new Promise((resolve, reject) => {
@@ -170,9 +179,18 @@ export default function AskSaathi({ lang, onOpenLesson }) {
 
       <div className="ask-list">
         {items.length === 0 && (
-          <button type="button" className="secondary" onClick={() => setText(UI.example)}>
-            {UI.askExample[lang]}
-          </button>
+          <>
+            <div className="flex flex-wrap gap-2" data-guide="ask-starters">
+              {STARTER_QUESTIONS.map((question) => (
+                <button type="button" className="secondary" key={question} disabled={busy} onClick={() => send(question)}>
+                  {question}
+                </button>
+              ))}
+            </div>
+            <button type="button" className="secondary" onClick={() => setText(UI.example)}>
+              {UI.askExample[lang]}
+            </button>
+          </>
         )}
         {items.map((item) =>
           item.role === 'user' ? (
