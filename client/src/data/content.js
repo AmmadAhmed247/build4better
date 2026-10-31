@@ -1,3 +1,23 @@
+import {
+  billBrief,
+  billSteps,
+  IBAN_BRIEF,
+  ibanSteps,
+  invoiceSteps,
+  jazzcashSteps,
+  KE,
+  KWSC,
+  loginStep,
+  meezanSteps,
+  RAAST_BRIEF,
+  raastSteps,
+  scenarioSteps,
+  SEND_BRIEF,
+  sendSteps,
+  SSGC,
+  VOUCHER,
+} from './flows'
+
 // Every spoken line has English (en), Roman Urdu for screen (ru) and Urdu script for voice (ur).
 
 export const WRONG_TAP = {
@@ -52,6 +72,11 @@ export const LINES = {
     ru: 'Shabash! Aap ne apna OTP share nahi kiya. Bilkul theek kiya.',
     ur: 'شاباش! آپ نے اپنا او ٹی پی شیئر نہیں کیا۔ بالکل ٹھیک کیا۔',
   },
+  readTask: {
+    en: 'Read your task. Keep these details in mind, then press Start.',
+    ru: 'Apna kaam parh lein. Yeh tafseelat yaad rakhein, phir Shuru Karein dabayein.',
+    ur: 'اپنا کام پڑھ لیں۔ یہ تفصیلات یاد رکھیں، پھر شروع کریں دبائیں۔',
+  },
   done: {
     en: 'Wonderful! You did it yourself.',
     ru: 'Zabardast! Yeh aap ne khud kiya.',
@@ -59,82 +84,99 @@ export const LINES = {
   },
 }
 
-export const LESSONS = {
-  bank: {
-    id: 'bank',
+function billLesson(id, bill, ru, en) {
+  return {
+    id,
     kind: 'practice',
-    title: { en: 'Send money', ru: 'Paise bhejna' },
-    blurb: { en: 'Use a pretend bank with pretend money', ru: 'Farzi bank aur farzi paison ke saath' },
-    icon: '₨',
+    brand: 'ep',
+    title: { en, ru },
+    blurb: { en: `${bill.company}, with your ${bill.refLabel}`, ru: `${bill.company}, ${bill.refLabel} se` },
+    logo: bill.paperLogo ?? '/brands/easypaisa.png',
+    brief: billBrief(bill),
+    steps: [loginStep('ep-login', 'easypaisa'), ...billSteps(bill)],
+  }
+}
+
+export const LESSONS = {
+  'ep-send': {
+    id: 'ep-send',
+    kind: 'practice',
+    brand: 'ep',
+    title: { en: 'easypaisa: Send money', ru: 'easypaisa: Paise bhejna' },
+    blurb: { en: 'To a mobile number', ru: 'Mobile number par' },
+    logo: '/brands/easypaisa.png',
     ambushAfter: 'amount',
-    steps: [
-      {
-        id: 'login',
-        screen: 'bank-login',
-        action: 'fill',
-        target: 'pin',
-        submit: 'login',
-        value: '1234',
-        say: {
-          en: 'This is a practice bank, so never use your real PIN. Type 1 2 3 4, then press Log in.',
-          ru: 'Yeh practice bank hai, is liye apna asli PIN kabhi na likhein. 1 2 3 4 likhein, phir Log in dabayein.',
-          ur: 'یہ پریکٹس بینک ہے، اس لیے اپنا اصلی پن کبھی نہ لکھیں۔ ایک دو تین چار لکھیں، پھر لاگ ان دبائیں۔',
-        },
-        wrong: {
-          en: 'This box needs 1 2 3 4. No problem. Please type it again.',
-          ru: 'Is dabbe mein 1 2 3 4 likhna hai. Koi baat nahi. Dobara likhein.',
-          ur: 'اس خانے میں ایک دو تین چار لکھنا ہے۔ کوئی بات نہیں۔ دوبارہ لکھیں۔',
-        },
-      },
-      {
-        id: 'send',
-        screen: 'bank-home',
-        target: 'send',
-        say: {
-          en: 'This is your home page. Press Send Money.',
-          ru: 'Yeh aap ka home page hai. Paise Bhejein dabayein.',
-          ur: 'یہ آپ کا ہوم پیج ہے۔ پیسے بھیجیں دبائیں۔',
-        },
-      },
-      {
-        id: 'recipient',
-        screen: 'bank-recipient',
-        target: 'ahmed',
-        say: {
-          en: 'Choose who gets the money. Press Ahmed.',
-          ru: 'Chunein paise kis ko bhejne hain. Ahmed ko dabayein.',
-          ur: 'چنیں پیسے کس کو بھیجنے ہیں۔ احمد کو دبائیں۔',
-        },
-      },
-      {
-        id: 'amount',
-        screen: 'bank-amount',
-        action: 'fill',
-        target: 'amount',
-        submit: 'continue',
-        value: '500',
-        say: {
-          en: 'Type 500, then press Continue.',
-          ru: '500 likhein, phir Aage Barhein dabayein.',
-          ur: 'پانچ سو لکھیں، پھر آگے بڑھیں دبائیں۔',
-        },
-        wrong: {
-          en: 'The amount should be 500. Check the number and try again.',
-          ru: 'Raqam 500 honi chahiye. Number dekh kar dobara likhein.',
-          ur: 'رقم پانچ سو ہونی چاہیے۔ نمبر دیکھ کر دوبارہ لکھیں۔',
-        },
-      },
-      {
-        id: 'confirm',
-        screen: 'bank-review',
-        target: 'confirm',
-        say: {
-          en: 'Always check the name and amount. If they are right, press Confirm.',
-          ru: 'Hamesha naam aur raqam dekh lein. Agar theek hain to Tasdeeq Karein dabayein.',
-          ur: 'ہمیشہ نام اور رقم دیکھ لیں۔ اگر ٹھیک ہیں تو تصدیق کریں دبائیں۔',
-        },
-      },
+    brief: SEND_BRIEF,
+    steps: [loginStep('ep-login', 'easypaisa'), ...sendSteps()],
+  },
+  'ep-ke': billLesson('ep-ke', KE, 'Bijli ka bill', 'Electricity bill'),
+  'ep-gas': billLesson('ep-gas', SSGC, 'Gas ka bill', 'Gas bill'),
+  'ep-water': billLesson('ep-water', KWSC, 'Pani ka bill', 'Water bill'),
+  'ep-invoice': {
+    id: 'ep-invoice',
+    kind: 'practice',
+    brand: 'ep',
+    title: { en: 'Pay by invoice number', ru: 'Invoice number se adaigi' },
+    blurb: { en: 'Fee challans and vouchers', ru: 'Fee challan aur vouchers' },
+    logo: '/brands/easypaisa.png',
+    brief: billBrief(VOUCHER),
+    steps: [loginStep('ep-login', 'easypaisa'), ...invoiceSteps()],
+  },
+  'ep-iban': {
+    id: 'ep-iban',
+    kind: 'practice',
+    brand: 'ep',
+    title: { en: 'Send by IBAN', ru: 'IBAN se paise bhejna' },
+    blurb: { en: 'What it is and where it goes', ru: 'Yeh kya hai aur kahan likhte hain' },
+    logo: '/brands/easypaisa.png',
+    brief: IBAN_BRIEF,
+    steps: [loginStep('ep-login', 'easypaisa'), ...ibanSteps()],
+  },
+  'ep-raast': {
+    id: 'ep-raast',
+    kind: 'practice',
+    brand: 'ep',
+    title: { en: 'Pay with Raast', ru: 'Raast se adaigi' },
+    blurb: { en: 'Instant payments between banks', ru: 'Banks ke darmiyan fauri adaigi' },
+    logo: '/brands/easypaisa.png',
+    brief: RAAST_BRIEF,
+    steps: [loginStep('ep-login', 'easypaisa'), ...raastSteps()],
+  },
+  'jc-send': {
+    id: 'jc-send',
+    kind: 'practice',
+    brand: 'jc',
+    title: { en: 'JazzCash: Send money', ru: 'JazzCash: Paise bhejna' },
+    blurb: { en: 'To a mobile number', ru: 'Mobile number par' },
+    logo: '/brands/jazzcash.png',
+    brief: [
+      { en: 'Send Rs 700 to Ahmed Raza', ru: 'Ahmed Raza ko Rs 700 bhejein' },
+      SEND_BRIEF[1],
+      SEND_BRIEF[2],
     ],
+    steps: jazzcashSteps(),
+  },
+  'mz-iban': {
+    id: 'mz-iban',
+    kind: 'practice',
+    brand: 'mz',
+    title: { en: 'Meezan: Fund transfer', ru: 'Meezan: Fund transfer' },
+    blurb: { en: 'Send to another bank by IBAN', ru: 'IBAN se doosre bank mein' },
+    brief: [{ en: 'Send Rs 2000 by IBAN', ru: 'IBAN se Rs 2000 bhejein' }, IBAN_BRIEF[1], SEND_BRIEF[2]],
+    steps: meezanSteps(),
+  },
+  scenario: {
+    id: 'scenario',
+    kind: 'scenario',
+    brand: 'ep',
+    title: { en: 'Real World Test', ru: 'Asli Duniya ka Test' },
+    brief: [
+      { en: 'Pay your K-Electric bill', ru: 'K-Electric ka bill ada karein' },
+      { en: 'Pay a fee voucher by invoice number', ru: 'Invoice number se fee voucher ada karein' },
+      { en: 'Send money by IBAN', ru: 'IBAN se paise bhejein' },
+      { en: 'Send money by Raast', ru: 'Raast se paise bhejein' },
+    ],
+    steps: scenarioSteps(),
   },
   video: {
     id: 'video',
@@ -290,7 +332,7 @@ export const LESSONS = {
   },
 }
 
-export const PRACTICE = ['bank']
+export const PRACTICE = ['ep-send', 'ep-ke', 'ep-gas', 'ep-water', 'ep-invoice', 'ep-iban', 'ep-raast', 'jc-send', 'mz-iban']
 export const TIPS = ['video', 'screenshot', 'google', 'ai']
 
 // Each part marked with a flag number gets highlighted after the person falls for the scam.
@@ -335,6 +377,13 @@ export const UI = {
   ],
   round: { en: 'Round', ru: 'Round' },
   tip: { en: 'Tip', ru: 'Tip' },
+  yourTask: { en: 'Your task', ru: 'Aap ka kaam' },
+  start: { en: 'Start', ru: 'Shuru Karein' },
+  scenarioButton: { en: 'Test Real World Scenario', ru: 'Test Real World Scenario' },
+  scenarioLead: {
+    en: 'Pay bills and send money in easypaisa with no step by step help.',
+    ru: 'easypaisa mein bill aur paise khud bhejein, baghair step by step madad ke.',
+  },
   safeBadge: { en: 'Practice only', ru: 'Sirf practice' },
   doneAlone: { en: 'Completed without help', ru: 'Baghair madad mukammal kiya' },
   doneTitle: { en: 'You did it!', ru: 'Aap ne kar dikhaya!' },

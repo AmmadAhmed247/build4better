@@ -79,7 +79,7 @@ const TOPICS = [
   },
   {
     test: /bank|paise|money|transfer/i,
-    lessonId: 'bank',
+    lessonId: 'ep-send',
     en: 'You can practise sending money with no risk in our practice bank.',
     ru: 'Aap hamare practice bank mein baghair kisi khatre ke paise bhejne ki practice kar sakte hain.',
   },

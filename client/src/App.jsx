@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import AskSaathi from './components/AskSaathi'
 import Avatar, { AvatarFace } from './components/Avatar'
+import Icon from './components/Icons'
 import LessonRunner from './components/LessonRunner'
 import { LESSONS, LINES, PRACTICE, TIPS, UI } from './data/content'
 import { speak, stopSpeaking } from './lib/speech'
@@ -32,7 +33,11 @@ function LessonCard({ lesson, lang, progress, onStart }) {
   return (
     <article className="practice-card">
       <div className="practice-head">
-        <span className="card-icon" aria-hidden="true">{lesson.icon}</span>
+        {lesson.logo ? (
+          <img className="card-logo" src={lesson.logo} alt="" />
+        ) : (
+          <span className="card-icon card-icon-bank" aria-hidden="true"><Icon name="bank" size={30} /></span>
+        )}
         <div>
           <h2>{lesson.title[lang]}</h2>
           <p>{lesson.blurb[lang]}</p>
@@ -44,7 +49,7 @@ function LessonCard({ lesson, lang, progress, onStart }) {
           <button
             type="button"
             key={round.en}
-            data-guide={`round-${index + 1}`}
+            data-guide={`${lesson.id}-round-${index + 1}`}
             className="round-choice"
             onClick={() => onStart(lesson.id, index + 1)}
           >
@@ -188,6 +193,13 @@ function App() {
             <button type="button" className="text-button" onClick={() => go('language')}>{UI.language[lang]}</button>
           </header>
           <p className="lead">{UI.homeLead[lang]}</p>
+          <button type="button" className="scenario-card" data-guide="scenario" onClick={() => startLesson('scenario', 3)}>
+            <img src="/brands/easypaisa.png" alt="" />
+            <span>
+              <strong>{UI.scenarioButton[lang]}</strong>
+              <small>{UI.scenarioLead[lang]}</small>
+            </span>
+          </button>
           {PRACTICE.map((id) => (
             <LessonCard key={id} lesson={LESSONS[id]} lang={lang} progress={saved.progress} onStart={startLesson} />
           ))}

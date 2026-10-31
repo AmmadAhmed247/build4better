@@ -4,8 +4,24 @@ import { SCREENS } from './Screens'
 
 const ERROR_HOLD_MS = 5500
 
+const START_BALANCE = 50000
+
+function clean(value) {
+  return (value ?? '').replace(/[\s-]/g, '').toLowerCase()
+}
+
 function isCorrectValue(step, values) {
-  return (values[step.target] ?? '').trim().toLowerCase() === step.value
+  return clean(values[step.target]) === clean(step.value)
+}
+
+function TaskList({ items, lang }) {
+  return (
+    <ul className="task-list">
+      {items.map((item) => (
+        <li key={item.en}>{item[lang]}</li>
+      ))}
+    </ul>
+  )
 }
 
 function ScamMessage({ lang, learning, onShare, onDelete, onRetry }) {
@@ -54,10 +70,11 @@ function ScamMessage({ lang, learning, onShare, onDelete, onRetry }) {
 export default function LessonRunner({ lesson, round, lang, setGuide, guide, onExit, onFinish }) {
   const [stepIndex, setStepIndex] = useState(0)
   const [values, setValues] = useState({})
-  const [phase, setPhase] = useState('steps')
+  const [phase, setPhase] = useState(round === 3 && lesson.brief ? 'brief' : 'steps')
   const [mistakes, setMistakes] = useState(0)
   const [helps, setHelps] = useState(0)
   const [scam, setScam] = useState(null)
+  const [spent, setSpent] = useState(0)
   const errorTimer = useRef(null)
   const showIntro = useRef(round > 1)
 
@@ -72,6 +89,10 @@ export default function LessonRunner({ lesson, round, lang, setGuide, guide, onE
   }
 
   useEffect(() => {
+    if (phase === 'brief') {
+      setGuide({ line: LINES.readTask, target: null })
+      return undefined
+    }
     if (phase !== 'steps') return undefined
     if (showIntro.current) {
       showIntro.current = false
@@ -90,6 +111,8 @@ export default function LessonRunner({ lesson, round, lang, setGuide, guide, onE
 
   function advance() {
     clearTimeout(errorTimer.current)
+    if (step.sets) setValues((current) => ({ ...current, ...step.sets }))
+    if (step.pay) setSpent((total) => total + Number(step.pay))
     if (hasScam && step.id === lesson.ambushAfter && scam === null) {
       setScam('pending')
       setPhase('scam')
@@ -102,6 +125,13 @@ export default function LessonRunner({ lesson, round, lang, setGuide, guide, onE
       onFinish({ mistakes, helps, scam })
       return
     }
+    moveToNext()
+  }
+
+  // Each form starts empty, so one task's number never carries into the next.
+  function moveToNext() {
+    const next = lesson.steps[stepIndex + 1]
+    if (next.action === 'fill') setValues((current) => ({ ...current, [next.target]: '' }))
     setStepIndex(stepIndex + 1)
   }
 
@@ -151,17 +181,23 @@ export default function LessonRunner({ lesson, round, lang, setGuide, guide, onE
 
   function continueAfterScam() {
     setPhase('steps')
-    setStepIndex(stepIndex + 1)
+    moveToNext()
   }
 
-  const label = lesson.kind === 'tip' ? UI.tip[lang] : `${UI.round[lang]} ${round}: ${UI.rounds[round - 1][lang]}`
+  const label =
+    lesson.kind === 'tip'
+      ? UI.tip[lang]
+      : lesson.kind === 'scenario'
+        ? lesson.title[lang]
+        : `${UI.round[lang]} ${round}: ${UI.rounds[round - 1][lang]}`
+  const reminder = round === 3 ? (step.brief ?? lesson.brief) : null
 
   if (phase === 'done') {
     const alone = round === 3 && helps === 0 && scam !== 'fell'
     return (
       <main className="done">
         <h1>{UI.doneTitle[lang]}</h1>
-        <p className="done-lesson">{lesson.title[lang]} · {label}</p>
+        <p className="done-lesson">{lesson.kind === 'scenario' ? label : `${lesson.title[lang]} · ${label}`}</p>
         {alone && <p className="done-badge">{UI.doneAlone[lang]}</p>}
         <dl className="done-stats">
           <div><dt>{UI.tries[lang]}</dt><dd>{mistakes}</dd></div>
@@ -199,11 +235,31 @@ export default function LessonRunner({ lesson, round, lang, setGuide, guide, onE
         </button>
         <span>{label}</span>
       </header>
-      <div className="phone">
+      {reminder && phase === 'steps' && (
+        <aside className="task-strip">
+          <strong>{UI.yourTask[lang]}</strong>
+          <TaskList items={reminder} lang={lang} />
+        </aside>
+      )}
+      <div className={`phone brand-${lesson.brand ?? 'none'}`}>
         <div className="phone-badge">{UI.safeBadge[lang]}</div>
+        {phase === 'brief' && (
+          <div className="phone-screen">
+            <div className="brief">
+              <h2>{UI.yourTask[lang]}</h2>
+              <TaskList items={lesson.brief} lang={lang} />
+              <button type="button" className="primary" onClick={() => setPhase('steps')}>
+                {UI.start[lang]}
+              </button>
+            </div>
+          </div>
+        )}
         {phase === 'steps' && (
           <div className="phone-screen" onClickCapture={handleTap}>
             <Screen
+              lang={lang}
+              data={step.data}
+              balance={START_BALANCE - spent}
               values={values}
               onChange={(key, value) => setValues((current) => ({ ...current, [key]: value }))}
             />

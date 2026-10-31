@@ -66,6 +66,7 @@ export default function Avatar({ guide, lang, onSkip, dock }) {
       setDockBox(dockElement ? toBox(dockElement.getBoundingClientRect()) : null)
       setViewport({ width: window.innerWidth, height: window.innerHeight })
     }
+    findTarget(target)?.scrollIntoView({ block: 'nearest' })
     measure()
     window.addEventListener('resize', measure)
     window.addEventListener('scroll', measure, true)

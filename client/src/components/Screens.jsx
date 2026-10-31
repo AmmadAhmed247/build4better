@@ -1,24 +1,10 @@
+import Icon from './Icons'
+import { PAY_SCREENS } from './PayScreens'
+
 // Pretend app screens. Anything with data-guide can be tapped and checked by the lesson.
 
 function Bar({ title }) {
   return <div className="app-bar">{title}</div>
-}
-
-function Field({ id, label, value, onChange, type = 'text', mode }) {
-  return (
-    <label className="app-label">
-      {label}
-      <input
-        data-guide={id}
-        className="app-input"
-        type={type}
-        inputMode={mode}
-        autoComplete="off"
-        value={value ?? ''}
-        onChange={(event) => onChange(id, event.target.value)}
-      />
-    </label>
-  )
 }
 
 function Tap({ id, className = 'app-button', children }) {
@@ -26,81 +12,6 @@ function Tap({ id, className = 'app-button', children }) {
     <button type="button" data-guide={id} className={className}>
       {children}
     </button>
-  )
-}
-
-function BankLogin({ values, onChange }) {
-  return (
-    <>
-      <Bar title="Practice Bank" />
-      <div className="app-body">
-        <div className="bank-logo" aria-hidden="true">PB</div>
-        <Field id="pin" label="PIN" type="password" mode="numeric" value={values.pin} onChange={onChange} />
-        <Tap id="login">Log in</Tap>
-        <Tap id="forgot" className="app-link">Forgot PIN?</Tap>
-      </div>
-    </>
-  )
-}
-
-function BankHome() {
-  return (
-    <>
-      <Bar title="Practice Bank" />
-      <div className="app-body">
-        <div className="balance">
-          <span>Pretend balance</span>
-          <strong>Rs 50,000</strong>
-        </div>
-        <div className="app-grid">
-          <Tap id="send">Paise Bhejein<br />Send Money</Tap>
-          <Tap id="bills" className="app-button app-button-quiet">Bills</Tap>
-          <Tap id="statement" className="app-button app-button-quiet">Statement</Tap>
-          <Tap id="cards" className="app-button app-button-quiet">Cards</Tap>
-        </div>
-      </div>
-    </>
-  )
-}
-
-function BankRecipient() {
-  return (
-    <>
-      <Bar title="Send to" />
-      <div className="app-body">
-        <Tap id="sara" className="app-row"><span className="dot">S</span>Sara</Tap>
-        <Tap id="ahmed" className="app-row"><span className="dot">A</span>Ahmed</Tap>
-        <Tap id="bilal" className="app-row"><span className="dot">B</span>Bilal</Tap>
-      </div>
-    </>
-  )
-}
-
-function BankAmount({ values, onChange }) {
-  return (
-    <>
-      <Bar title="Send to Ahmed" />
-      <div className="app-body">
-        <Field id="amount" label="Amount (Rs)" mode="numeric" value={values.amount} onChange={onChange} />
-        <Tap id="continue">Aage Barhein<br />Continue</Tap>
-      </div>
-    </>
-  )
-}
-
-function BankReview({ values }) {
-  return (
-    <>
-      <Bar title="Check before sending" />
-      <div className="app-body">
-        <dl className="review">
-          <div><dt>To</dt><dd>Ahmed</dd></div>
-          <div><dt>Amount</dt><dd>Rs {values.amount}</dd></div>
-        </dl>
-        <Tap id="confirm">Tasdeeq Karein<br />Confirm</Tap>
-        <Tap id="cancel" className="app-link">Cancel</Tap>
-      </div>
-    </>
   )
 }
 
@@ -162,43 +73,65 @@ function ShotPhone({ taken }) {
   )
 }
 
-function SearchHome({ values, onChange }) {
+function GoogleBox({ children }) {
   return (
-    <div className="app-body search-home">
-      <div className="search-logo">Search</div>
-      <input
-        data-guide="query"
-        className="app-input"
-        aria-label="Search"
-        autoComplete="off"
-        value={values.query ?? ''}
-        onChange={(event) => onChange('query', event.target.value)}
-      />
-      <Tap id="search">Search</Tap>
-      <Tap id="lucky" className="app-link">Images</Tap>
+    <div className="g-box">
+      <Icon name="plus" size={20} />
+      {children}
+      <Icon name="mic" size={20} />
+      <Icon name="camera" size={20} />
     </div>
   )
 }
 
+function SearchHome({ values, onChange }) {
+  return (
+    <div className="g-home">
+      <img className="g-logo" src="/brands/google.png" alt="Google" />
+      <GoogleBox>
+        <input
+          data-guide="query"
+          aria-label="Search"
+          autoComplete="off"
+          value={values.query ?? ''}
+          onChange={(event) => onChange('query', event.target.value)}
+        />
+      </GoogleBox>
+      <div className="g-buttons">
+        <Tap id="search" className="g-button">Google Search</Tap>
+        <Tap id="lucky" className="g-button">I&apos;m Feeling Lucky</Tap>
+      </div>
+      <p className="g-offered">Google offered in: <span lang="ur">اردو</span></p>
+    </div>
+  )
+}
+
+const G_RESULTS = [
+  ['result', 'weather.example', 'https://weather.example', 'Karachi weather today and this week', 'Today 24°C and sunny. See the hourly forecast and the next 7 days.'],
+  ['other', 'news.example', 'https://news.example › weather', 'Weather news this week', 'Rain is expected in some parts of the country on Friday.'],
+]
+
 function SearchResults() {
   return (
-    <>
-      <Bar title="weather" />
-      <div className="app-body">
-        <Tap id="ad" className="result">
-          <small>Sponsored</small>
-          <b>Win a free phone now!</b>
+    <div className="g-results">
+      <img className="g-small" src="/brands/google.png" alt="Google" />
+      <GoogleBox><span className="g-query">weather</span></GoogleBox>
+      <div className="g-tabs"><b>All</b><span>Images</span><span>News</span><span>Videos</span></div>
+      <Tap id="ad" className="g-result">
+        <small className="g-sponsored">Sponsored</small>
+        <cite>win-prize.example</cite>
+        <strong>Win a free phone now!</strong>
+        <span>Claim your prize today. Limited offer.</span>
+      </Tap>
+      {G_RESULTS.map(([id, site, url, title, snippet]) => (
+        <Tap key={id} id={id} className="g-result">
+          <small>{site}</small>
+          <cite>{url}</cite>
+          <strong>{title}</strong>
+          <span>{snippet}</span>
         </Tap>
-        <Tap id="result" className="result">
-          <small>weather.example</small>
-          <b>Today&apos;s weather: 24°C and sunny</b>
-        </Tap>
-        <Tap id="other" className="result">
-          <small>news.example</small>
-          <b>Weather news this week</b>
-        </Tap>
-      </div>
-    </>
+      ))}
+    </div>
   )
 }
 
@@ -235,11 +168,7 @@ function AiAnswer() {
 }
 
 export const SCREENS = {
-  'bank-login': BankLogin,
-  'bank-home': BankHome,
-  'bank-recipient': BankRecipient,
-  'bank-amount': BankAmount,
-  'bank-review': BankReview,
+  ...PAY_SCREENS,
   'call-incoming': CallIncoming,
   'call-active': CallActive,
   'call-camera': CallCamera,
