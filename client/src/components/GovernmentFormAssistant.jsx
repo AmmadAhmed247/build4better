@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
 import { AvatarFace, useSpeaking } from './Avatar'
+import { apiUrl } from '../lib/api'
 import { containsSecret, SECRET_WARNING } from '../lib/localCheck'
 import { speak, stopSpeaking } from '../lib/speech'
 import PageHeader from './PageHeader'
@@ -187,7 +188,7 @@ const COMMON_FIELDS = [
 ]
 
 async function explainWord(word, lang) {
-  const response = await fetch('/api/ask', {
+  const response = await fetch(apiUrl('/api/ask'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

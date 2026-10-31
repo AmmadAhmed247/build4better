@@ -19,6 +19,7 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { AvatarFace, useSpeaking } from './Avatar'
 import { LINES, UI } from '../data/content'
+import { apiUrl } from '../lib/api'
 import { addUrdu } from '../lib/i18n'
 import { containsSecret, localAnswer, SECRET_WARNING } from '../lib/localCheck'
 import { startRecording } from '../lib/recorder'
@@ -102,7 +103,7 @@ const RISK_STYLE = {
 }
 
 async function post(url, body) {
-  const response = await fetch(url, {
+  const response = await fetch(apiUrl(url), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

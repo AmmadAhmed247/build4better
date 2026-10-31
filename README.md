@@ -26,7 +26,7 @@ cd backend && npm install && npm start
 cd client && npm install && npm run dev
 ```
 
-Open http://localhost:5173. Vite sends `/api` requests to the backend on port 3001.
+Open http://localhost:5173. The client calls the backend at `VITE_API_URL`, or `http://localhost:3000` when that is not set. Production builds use the URL in `client/.env.production`.
 
 For a single production server, run `npm run build` in `client`, then `npm start` in `backend` and open http://localhost:3001.
 
