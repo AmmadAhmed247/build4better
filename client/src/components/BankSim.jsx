@@ -88,7 +88,7 @@ function Heading({ title, onBack }) {
         onClick={onBack}
         className="grid size-11 place-items-center rounded-xl border border-stone-300 bg-white transition hover:bg-stone-100"
       >
-        <ArrowLeft size={22} />
+        <ArrowLeft size="1.375rem" />
       </button>
       <h2 className="text-xl font-bold text-mz-dark">{title}</h2>
     </div>
@@ -109,7 +109,7 @@ function CopyRow({ label, value, guide, onCopy }) {
           onClick={() => onCopy(value)}
           className="flex min-h-11 flex-none items-center gap-1 rounded-xl border-2 border-mz-gold bg-white px-3 font-semibold text-mz-dark transition hover:bg-amber-50"
         >
-          <Copy size={18} /> Copy
+          <Copy size="1.125rem" /> Copy
         </button>
       )}
     </div>
@@ -140,7 +140,7 @@ function Field({ id, label, value, onChange, error, clip, mode = 'text' }) {
             onClick={() => onChange(clip)}
             className="flex min-h-14 flex-none items-center gap-1 rounded-xl bg-mz-gold px-3 font-semibold text-mz-dark transition disabled:opacity-40"
           >
-            <ClipboardPaste size={18} /> Paste
+            <ClipboardPaste size="1.125rem" /> Paste
           </button>
         )}
       </div>
@@ -152,7 +152,7 @@ function Field({ id, label, value, onChange, error, clip, mode = 'text' }) {
 function Done({ title, rows, children }) {
   return (
     <div className="fade-up text-center">
-      <CheckCircle2 size={84} className="mx-auto text-mz-green" />
+      <CheckCircle2 size="5.25rem" className="mx-auto text-mz-green" />
       <h2 className="mt-2 text-2xl font-bold text-mz-dark">{title}</h2>
       <dl className="my-4 rounded-2xl bg-stone-50 p-3 text-left">
         {rows.map(([label, value]) => (
@@ -326,7 +326,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
       onClick={onRealWorld}
       className="flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl bg-easy px-4 text-lg font-bold text-white transition hover:brightness-95"
     >
-      {tr(lang, 'Try real world easypaisa', 'Real World easypaisa try karein')} <ArrowRight size={20} />
+      {tr(lang, 'Try real world easypaisa', 'Real World easypaisa try karein')} <ArrowRight size="1.25rem" />
     </button>
   )
   const backHome = <Primary guide="dash-back" onClick={() => open('dash')}>{tr(lang, 'Back to dashboard', 'Wapas Dashboard')}</Primary>
@@ -341,7 +341,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
       <header className="sticky top-0 z-10 bg-mz-dark text-white shadow">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-2">
           <button type="button" onClick={onExit} className="flex min-h-11 items-center gap-1 border-0 bg-transparent font-semibold text-white">
-            <ArrowLeft size={20} /> {tr(lang, 'Home', 'Home')}
+            <ArrowLeft size="1.25rem" /> {tr(lang, 'Home', 'Home')}
           </button>
           <strong className="whitespace-nowrap text-mz-gold">Meezan Style<span className="hidden sm:inline"> Bank</span></strong>
           <span className="flex-none rounded-full bg-mz-gold px-2 py-0.5 text-sm font-bold whitespace-nowrap text-mz-dark">
@@ -374,7 +374,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
             {showPhone && <CopyRow label="Mobile" value={TOPUP_NUMBER} />}
           </aside>
         )}
-          <div data-guide="side-slot" className="hidden h-44 lg:block" />
+          <div data-guide="side-slot" data-follow className="hidden h-44 lg:block" />
         </div>
 
         <div key={stage} className="fade-up min-w-0 rounded-3xl bg-white p-4 shadow-sm sm:p-6">
@@ -392,7 +392,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
                     onClick={() => setHidden(!hidden)}
                     className="grid size-11 place-items-center rounded-xl bg-white/15"
                   >
-                    {hidden ? <Eye size={22} /> : <EyeOff size={22} />}
+                    {hidden ? <Eye size="1.375rem" /> : <EyeOff size="1.375rem" />}
                   </button>
                 </div>
               </div>
@@ -419,7 +419,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
                     onClick={action}
                     className="flex min-h-28 flex-col items-center justify-center gap-2 rounded-2xl border border-stone-200 bg-white font-bold text-mz-dark transition hover:-translate-y-0.5 hover:border-mz-gold hover:shadow"
                   >
-                    <Icon size={32} className="text-mz-green" /> {label}
+                    <Icon size="2rem" className="text-mz-green" /> {label}
                   </button>
                 ))}
               </div>
@@ -471,7 +471,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
             <>
               <Heading title={tr(lang, 'Enter amount', 'Raqam likhein')} onBack={() => setStage('send-account')} />
               <p className="mb-3 flex items-center gap-2 rounded-xl bg-emerald-50 p-3 font-semibold text-mz-dark">
-                <CheckCircle2 size={20} /> {RECIPIENT.name}
+                <CheckCircle2 size="1.25rem" /> {RECIPIENT.name}
               </p>
               <Field id="amount" label="Amount (Rs.)" mode="numeric" value={amount} error={error} onChange={(value) => { setAmount(value); setError('') }} />
               <Primary guide="amount-next" onClick={checkAmount}>{tr(lang, 'Continue', 'Aage barhein')}</Primary>
@@ -515,7 +515,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
                       }}
                       className="flex min-h-28 flex-col items-center justify-center gap-2 rounded-2xl border border-stone-200 font-bold transition hover:border-mz-green"
                     >
-                      <Icon size={32} className="text-mz-green" /> {name}
+                      <Icon size="2rem" className="text-mz-green" /> {name}
                     </button>
                   )
                 })}

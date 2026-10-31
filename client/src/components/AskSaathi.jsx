@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AvatarFace, useSpeaking } from './Avatar'
 import { LESSONS, UI } from '../data/content'
@@ -5,6 +6,15 @@ import { containsSecret, localAnswer, SECRET_WARNING } from '../lib/localCheck'
 import { speak } from '../lib/speech'
 
 const MAX_IMAGE_SIDE = 1280
+
+const STARTER_QUESTIONS = [
+  'OTP kya hota hai?',
+  'Technology kya hai?',
+  'Scam message ki pehchan kya hai?',
+  'Video call kaise karun?',
+  'Screenshot kaise lete hain?',
+  'Online payment kaise karun?',
+]
 
 // Shrinks phone photos so they stay under the API image limit.
 function readImage(file) {
@@ -34,9 +44,14 @@ function toLine(text) {
   return { en: text, ru: text, ur: text }
 }
 
-function Reply({ item, lang, onOpenLesson }) {
+// AI answers carry an Urdu script version, which the recorded voice can read well.
+function answerLine(answer) {
+  const text = [answer.reply, answer.next_step].filter(Boolean).join(' ')
+  return answer.speak_text ? { en: text, ru: text, ur: answer.speak_text, live: true } : toLine(text)
+}
+
+function Reply({ item, lang, busy, canReply, onReply, onOpenLesson }) {
   const { answer } = item
-  const spoken = [answer.reply, answer.next_step].filter(Boolean).join(' ')
   return (
     <div className={`reply reply-${answer.kind === 'scam_check' ? answer.risk : 'plain'}`}>
       {answer.kind === 'scam_check' && <strong className="reply-risk">{UI.risk[answer.risk][lang]}</strong>}
@@ -53,8 +68,17 @@ function Reply({ item, lang, onOpenLesson }) {
           <p>{answer.next_step}</p>
         </>
       )}
+      {canReply && answer.suggested_replies?.length > 0 && (
+        <div className="reply-actions" data-guide="ask-replies">
+          {answer.suggested_replies.map((reply) => (
+            <button type="button" className="secondary" key={reply} disabled={busy} onClick={() => onReply(reply)}>
+              {reply}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="reply-actions">
-        <button type="button" className="text-button" onClick={() => speak(toLine(spoken), lang)}>
+        <button type="button" className="text-button" onClick={() => speak(answerLine(answer), lang)}>
           {UI.askListen[lang]}
         </button>
         {answer.lessonId && (
@@ -85,13 +109,14 @@ export default function AskSaathi({ lang, onOpenLesson }) {
   }, [])
 
   useEffect(() => {
+    if (items.length === 0) return
     // Starts at the top of the newest item so the risk heading is always seen.
     endRef.current?.previousElementSibling?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [items, busy])
 
-  function addAnswer(answer) {
-    setItems((current) => [...current, { id: crypto.randomUUID(), role: 'assistant', answer }])
-    speak(toLine([answer.reply, answer.next_step].filter(Boolean).join(' ')), lang)
+  function addAnswer(answer, isPrivate = false) {
+    setItems((current) => [...current, { id: crypto.randomUUID(), role: 'assistant', answer, private: isPrivate }])
+    speak(answerLine(answer), lang)
   }
 
   async function fetchAnswer(message, attachment, history) {
@@ -113,26 +138,43 @@ export default function AskSaathi({ lang, onOpenLesson }) {
     const trimmed = message.trim()
     if ((!trimmed && !image) || busy) return
     const attachment = image
-    const history = items.map((item) => ({
-      role: item.role,
-      text: item.role === 'user' ? item.text : item.answer.reply,
-    }))
+    // Card numbers and personal PINs never leave the device, now or in later history.
+    const isPrivate = containsSecret(trimmed)
+    const history = items
+      .filter((item) => !item.private)
+      .map((item) => ({
+        role: item.role,
+        text: item.role === 'user' ? item.historyText : item.answer.reply,
+      }))
+    const userId = crypto.randomUUID()
     setItems((current) => [
       ...current,
-      { id: crypto.randomUUID(), role: 'user', text: trimmed, preview: attachment?.preview },
+      {
+        id: userId,
+        role: 'user',
+        text: trimmed,
+        historyText: attachment ? `[screenshot] ${trimmed}`.trim() : trimmed,
+        preview: attachment?.preview,
+        private: isPrivate,
+      },
     ])
     setText('')
-    setImage(null)
 
-    // Card numbers and personal PINs never leave the device.
-    if (containsSecret(trimmed)) {
-      addAnswer({ kind: 'answer', risk: 'none', reply: SECRET_WARNING[lang], warning_signs: [], next_step: '' })
+    if (isPrivate) {
+      addAnswer({ kind: 'answer', risk: 'none', reply: SECRET_WARNING[lang], warning_signs: [], next_step: '' }, true)
       return
     }
 
     setBusy(true)
     try {
-      addAnswer(await fetchAnswer(trimmed, attachment, history))
+      const answer = await fetchAnswer(trimmed, attachment, history)
+      // Later turns remember the picture through this short description.
+      if (attachment && answer.screen_summary) {
+        const historyText = `[screenshot: ${answer.screen_summary}] ${trimmed}`.trim()
+        setItems((current) => current.map((item) => (item.id === userId ? { ...item, historyText } : item)))
+      }
+      addAnswer(answer)
+      if (attachment) removeImage()
       setOnline(true)
     } catch {
       setOnline(false)
@@ -144,6 +186,11 @@ export default function AskSaathi({ lang, onOpenLesson }) {
     } finally {
       setBusy(false)
     }
+  }
+
+  function removeImage() {
+    setImage(null)
+    if (fileRef.current) fileRef.current.value = ''
   }
 
   async function handlePhoto(event) {
@@ -170,18 +217,36 @@ export default function AskSaathi({ lang, onOpenLesson }) {
 
       <div className="ask-list">
         {items.length === 0 && (
-          <button type="button" className="secondary" onClick={() => setText(UI.example)}>
-            {UI.askExample[lang]}
-          </button>
+          <section className="rounded-2xl border-2 border-emerald-200 bg-white p-3 shadow-sm" data-guide="ask-starters-box">
+            <h2 className="mb-2 text-lg font-bold text-emerald-900">{UI.askStarters[lang]}</h2>
+            <div className="grid gap-2 sm:grid-cols-2" data-guide="ask-starters">
+              {STARTER_QUESTIONS.map((question) => (
+                <button type="button" className="secondary" key={question} disabled={busy} onClick={() => send(question)}>
+                  {question}
+                </button>
+              ))}
+              <button type="button" className="secondary" onClick={() => setText(UI.example)}>
+                {UI.askExample[lang]}
+              </button>
+            </div>
+          </section>
         )}
-        {items.map((item) =>
+        {items.map((item, index) =>
           item.role === 'user' ? (
             <div className="mine" key={item.id}>
               {item.preview && <img src={item.preview} alt="" />}
               {item.text && <p>{item.text}</p>}
             </div>
           ) : (
-            <Reply key={item.id} item={item} lang={lang} onOpenLesson={onOpenLesson} />
+            <Reply
+              key={item.id}
+              item={item}
+              lang={lang}
+              busy={busy}
+              canReply={index === items.length - 1}
+              onReply={send}
+              onOpenLesson={onOpenLesson}
+            />
           ),
         )}
         {busy && <p className="ask-busy">{UI.askThinking[lang]}</p>}
@@ -195,7 +260,22 @@ export default function AskSaathi({ lang, onOpenLesson }) {
           send(text)
         }}
       >
-        {image && <img className="ask-preview" src={image.preview} alt="" />}
+        {image && (
+          <div className="relative w-fit" data-guide="ask-attachment">
+            <img className="ask-preview block" src={image.preview} alt="" />
+            <button
+              type="button"
+              data-guide="ask-remove-image"
+              aria-label={UI.askRemovePhoto[lang]}
+              title={UI.askRemovePhoto[lang]}
+              disabled={busy}
+              onClick={removeImage}
+              className="absolute -top-2 -right-2 grid size-9 place-items-center rounded-full border-2 border-white bg-stone-900 text-white shadow disabled:opacity-40"
+            >
+              <X size="1.125rem" />
+            </button>
+          </div>
+        )}
         <textarea
           rows={2}
           value={text}
@@ -205,10 +285,10 @@ export default function AskSaathi({ lang, onOpenLesson }) {
         />
         <div className="ask-buttons">
           <input ref={fileRef} type="file" accept="image/*" hidden onChange={handlePhoto} />
-          <button type="button" className="secondary" onClick={() => fileRef.current.click()}>
+          <button type="button" className="secondary" disabled={busy} onClick={() => fileRef.current.click()}>
             {UI.askPhoto[lang]}
           </button>
-          <button type="submit" className="primary" disabled={busy}>
+          <button type="submit" className="primary" disabled={busy || (!text.trim() && !image)}>
             {UI.askSend[lang]}
           </button>
         </div>

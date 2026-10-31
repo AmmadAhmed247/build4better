@@ -4,6 +4,7 @@ const fs = require('fs')
 const express = require('express')
 const { ApiError, GoogleGenAI, Type } = require('@google/genai')
 const { MsEdgeTTS, OUTPUT_FORMAT } = require('msedge-tts')
+const { askChat, hasChatProvider } = require('./chatService')
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -11,7 +12,6 @@ const PORT = process.env.PORT || 3001
 const MODELS = (process.env.GEMINI_MODELS || 'gemini-flash-lite-latest,gemini-flash-latest,gemini-3.8-flash').split(',')
 const REQUEST_TIMEOUT_MS = 10000
 const MAX_TEXT = 4000
-const MAX_HISTORY = 10
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_SPEECH_TEXT = 1500
 const SPEECH_TIMEOUT_MS = 15000
@@ -79,7 +79,9 @@ SECRETS
 Never ask for an OTP, PIN, password, CVV, CNIC or card number, and never ask them to type one into the chat. If someone shares one, tell them to keep it private and not share it with anyone. Remind them when relevant: "Bank kabhi OTP ya PIN nahi mangta."
 
 IMAGES
-- Say in one line what you see, then answer the person's actual question from their request. If they sent an image with no question, explain the screen and say what they can do next.
+- First say in one line what you see, then answer the person's actual question from their request.
+- Then ask ONE short follow-up question about the outcome, and put 2 or 3 very short answers to it in suggested_replies. Example: for a payment screenshot ask "Payment ho gayi ya nahi?" with suggested_replies ["Ho gayi", "Nahi hui"]. If they answer "Nahi hui", ask what error is shown and help from there.
+- If an image is sent with no text, do not assume it is a scam check. Explain the screen, say what they can do next, and mention warning signs only if they exist.
 - If the image is blurry, cropped, tilted or unreadable, say so kindly, suggest taking a screenshot (power + volume down), and ask them to send it again. Never invent text that is not visible.
 - If an image shows an account number, balance, CNIC, card number, OTP or password, remind them not to send such pictures to anyone and to hide or crop those parts next time.
 
@@ -89,25 +91,16 @@ OUTPUT FIELDS
 - reply: the message shown to the person, following all rules above
 - speak_text: the same message written in Urdu script, for reading aloud
 - warning_signs: list of specific warning signs (empty list unless kind is "scam_check")
-- next_step: one clear next action (empty string if not needed)`
+- next_step: one clear next action (empty string if not needed)
+- screen_summary: one short line describing the attached image (empty string if there is no image)
+- suggested_replies: 2 or 3 very short answers to the question you just asked (empty list if you did not ask one)`
 
 const REPLY_LANGUAGES = { ru: 'Roman Urdu', ur: 'Urdu in Urdu script' }
+const NO_TEXT_IMAGE = 'The person sent this picture with no text. Explain the screen and what they can do next.'
 const SCRIPT_RULES = {
   ru: 'Write transcript and reply only in Latin letters, and speech only in Urdu letters.',
   ur: 'Write transcript, reply and speech only in Urdu letters, even when the person used English words. Write OTP as او ٹی پی and PIN as پن.',
   en: 'Write transcript, reply and speech in English.',
-}
-
-const REPLY_SCHEMA = {
-  type: Type.OBJECT,
-  properties: {
-    kind: { type: Type.STRING, enum: ['answer', 'scam_check'] },
-    risk: { type: Type.STRING, enum: ['danger', 'careful', 'none'] },
-    reply: { type: Type.STRING },
-    warning_signs: { type: Type.ARRAY, items: { type: Type.STRING } },
-    next_step: { type: Type.STRING },
-  },
-  required: ['kind', 'risk', 'reply', 'warning_signs', 'next_step'],
 }
 
 const GUIDE_FEATURES = {
@@ -188,29 +181,12 @@ async function recordSpeech(voice, text) {
   throw lastError
 }
 
-function buildContents({ message, history, image }) {
-  const past = (Array.isArray(history) ? history : [])
-    .filter((m) => ['user', 'assistant'].includes(m?.role) && typeof m.text === 'string' && m.text)
-    .slice(-MAX_HISTORY)
-    .map((m) => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: m.text.slice(0, MAX_TEXT) }],
-    }))
-  // The API expects the conversation to open with the user.
-  while (past[0]?.role === 'model') past.shift()
-
-  const parts = []
-  if (image) parts.push({ inlineData: { mimeType: image.mediaType, data: image.data } })
-  parts.push({ text: message || 'Please check this picture for scam warning signs.' })
-  return [...past, { role: 'user', parts }]
-}
-
 app.use(express.json({ limit: '8mb' }))
 
-app.get('/api/health', (req, res) => res.json({ ai: Boolean(client) }))
+app.get('/api/health', (req, res) => res.json({ ai: hasChatProvider() }))
 
 app.post('/api/ask', async (req, res) => {
-  if (!client) return res.status(503).json({ error: 'no_api_key' })
+  if (!hasChatProvider()) return res.status(503).json({ error: 'no_api_key' })
 
   const { message = '', lang, image, history } = req.body || {}
   if (typeof message !== 'string' || message.length > MAX_TEXT) {
@@ -221,26 +197,17 @@ app.post('/api/ask', async (req, res) => {
     return res.status(400).json({ error: 'bad_image' })
   }
 
-  try {
-    const response = await generate({
-      contents: buildContents({ message, history, image }),
-      config: {
-        systemInstruction: `${SYSTEM}\n\nReply language: ${replyLanguage(lang)}.`,
-        responseMimeType: 'application/json',
-        responseSchema: REPLY_SCHEMA,
-      },
-    })
-    if (!response.text) return res.status(502).json({ error: 'empty_reply' })
-    res.json(JSON.parse(response.text))
-  } catch (err) {
-    if (err instanceof ApiError && [401, 403].includes(err.status)) {
-      console.error('Gemini API key was rejected')
-      return res.status(503).json({ error: 'bad_api_key' })
-    }
-    if (err instanceof ApiError && err.status === 429) return res.status(429).json({ error: 'rate_limited' })
-    console.error('Ask failed:', err.message)
-    res.status(502).json({ error: 'ai_failed' })
-  }
+  const { answer, status } = await askChat({
+    system: `${SYSTEM}\n\nReply language: ${replyLanguage(lang)}. ${SCRIPT_RULES[lang] ?? SCRIPT_RULES.en} Here the speech field is speak_text.`,
+    models: MODELS,
+    history,
+    message,
+    text: message || NO_TEXT_IMAGE,
+    image,
+  })
+  if (answer) return res.json(answer)
+  if (status === 429) return res.status(429).json({ error: 'rate_limited' })
+  res.status(502).json({ error: 'ai_failed' })
 })
 
 // Understands a spoken or typed request and says how to do it in the app.

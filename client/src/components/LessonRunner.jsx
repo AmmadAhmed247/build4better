@@ -282,7 +282,7 @@ export default function LessonRunner({ lesson, round, lang, setGuide, guide, onE
         {phase === 'praise' && (
           <div className="phone-screen">
             <div className="scam praise">
-              <p className="praise-mark" aria-hidden="true"><Check size={72} strokeWidth={3} /></p>
+              <p className="praise-mark" aria-hidden="true"><Check size="4.5rem" strokeWidth={3} /></p>
               <button type="button" className="app-button" onClick={continueAfterScam}>
                 {UI.continue[lang]}
               </button>

@@ -84,10 +84,10 @@ function ShotPhone({ taken }) {
 function GoogleBox({ children }) {
   return (
     <div className="g-box" data-ring>
-      <Icon name="plus" size={20} />
+      <Icon name="plus" size="1.25rem" />
       {children}
-      <Icon name="mic" size={20} />
-      <Icon name="camera" size={20} />
+      <Icon name="mic" size="1.25rem" />
+      <Icon name="camera" size="1.25rem" />
     </div>
   )
 }
@@ -97,7 +97,7 @@ function GoogleBar() {
     <div className="g-bar">
       <span>Gmail</span>
       <span>Images</span>
-      <Icon name="grid" size={20} />
+      <Icon name="grid" size="1.25rem" />
       <b className="g-account">S</b>
     </div>
   )
@@ -129,7 +129,7 @@ function SearchHome({ values, onChange }) {
           ['g-translate', 'spark', 'Translate'],
         ].map(([id, icon, label]) => (
           <Tap key={id} id={id} className="g-shortcut">
-            <span><Icon name={icon} size={20} /></span>
+            <span><Icon name={icon} size="1.25rem" /></span>
             {label}
           </Tap>
         ))}
@@ -142,7 +142,7 @@ function SearchHome({ values, onChange }) {
           ['g-trend-3', 'Petrol price today'],
         ].map(([id, label]) => (
           <Tap key={id} id={id} className="g-trend">
-            <Icon name="search" size={16} /> {label}
+            <Icon name="search" size="1rem" /> {label}
           </Tap>
         ))}
       </div>
@@ -216,7 +216,7 @@ function SearchResults() {
         <strong>People also ask</strong>
         {G_QUESTIONS.map(([id, question]) => (
           <Tap key={id} id={id} className="g-question">
-            {question} <Icon name="down" size={16} />
+            {question} <Icon name="down" size="1rem" />
           </Tap>
         ))}
       </div>
@@ -235,7 +235,7 @@ function SearchResults() {
         <div>
           {['weather tomorrow', 'weather lahore', 'rain today', 'weather islamabad'].map((word) => (
             <Tap key={word} id={`g-rel-${word}`} className="g-chip">
-              <Icon name="search" size={14} /> {word}
+              <Icon name="search" size="0.875rem" /> {word}
             </Tap>
           ))}
         </div>

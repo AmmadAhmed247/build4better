@@ -14,7 +14,7 @@ function Tap({ id, className = 'pay-btn', children }) {
 function Head({ title, sub, logo }) {
   return (
     <header className="pay-head">
-      <span className="pay-back" aria-hidden="true"><Icon name="back" size={20} /></span>
+      <span className="pay-back" aria-hidden="true"><Icon name="back" size="1.25rem" /></span>
       <div className="pay-title">
         <div>
           <h2>{title}</h2>
@@ -82,17 +82,17 @@ function EpHome({ balance }) {
         <strong>Hey There 👋</strong>
         <span className="ep-bell"><Icon name="bell" /></span>
       </div>
-      <div className="ep-search"><Icon name="search" size={18} /> Search or Ask</div>
+      <div className="ep-search"><Icon name="search" size="1.125rem" /> Search or Ask</div>
       <div className="ep-balance">
-        <span>easypaisa Account <Icon name="down" size={14} /></span>
+        <span>easypaisa Account <Icon name="down" size="0.875rem" /></span>
         <strong>Rs. {balance.toLocaleString('en-PK')}.00</strong>
-        <small>Hide Balance <Icon name="eye" size={14} /></small>
+        <small>Hide Balance <Icon name="eye" size="0.875rem" /></small>
       </div>
       <h3 className="ep-section">More with easypaisa</h3>
       <div className="ep-tiles">
         {EP_TILES.map(([id, icon, label]) => (
           <Tap key={id} id={id} className="ep-tile">
-            <Icon name={icon} size={24} />
+            <Icon name={icon} size="1.5rem" />
             <span>{label}</span>
           </Tap>
         ))}
@@ -100,7 +100,7 @@ function EpHome({ balance }) {
       <nav className="ep-nav">
         {EP_NAV.map(([icon, label], index) => (
           <span key={label} className={index === 0 ? 'is-on' : ''}>
-            <Icon name={icon} size={20} />
+            <Icon name={icon} size="1.25rem" />
             {label}
           </span>
         ))}
@@ -127,7 +127,7 @@ function EpSheet({ balance }) {
           <div className="ep-sheet-grid">
             {EP_SHEET.map(([id, icon, label]) => (
               <Tap key={id} id={id} className="ep-sheet-tile">
-                {icon ? <Icon name={icon} size={30} /> : <img src="/brands/easypaisa.png" alt="" />}
+                {icon ? <Icon name={icon} size="1.875rem" /> : <img src="/brands/easypaisa.png" alt="" />}
                 <span>{label}</span>
               </Tap>
             ))}
@@ -148,8 +148,8 @@ function EpTransfer({ values, onChange, data }) {
       </div>
       <div className="pay-body">
         <div className="pay-switch">
-          <span className="is-on"><Icon name="user" size={16} /> Mobile No.</span>
-          <span><Icon name="card" size={16} /> {data.raast ? 'IBAN' : 'Digital Account No.'}</span>
+          <span className="is-on"><Icon name="user" size="1rem" /> Mobile No.</span>
+          <span><Icon name="card" size="1rem" /> {data.raast ? 'IBAN' : 'Digital Account No.'}</span>
         </div>
         <Field
           id="number"
@@ -158,7 +158,7 @@ function EpTransfer({ values, onChange, data }) {
           onChange={onChange}
         />
         <div className="pay-row">
-          <span className="pay-plus"><Icon name="plus" size={16} /></span>
+          <span className="pay-plus"><Icon name="plus" size="1rem" /></span>
           <b>{values.number || 'Receiver'}</b>
           <Tap id="select" className="pay-text">Select</Tap>
         </div>
@@ -222,7 +222,7 @@ function PayConfirm({ values, data, balance }) {
 function PaySuccess({ data }) {
   return (
     <div className="pay-success">
-      <span className="pay-tick"><Icon name="check" size={46} /></span>
+      <span className="pay-tick"><Icon name="check" size="2.875rem" /></span>
       <h2>Rs. {data.amount}.00</h2>
       <p>Successfully {data.amountLabel} to</p>
       {data.logo && <img src={data.logo} alt="" />}
@@ -230,8 +230,8 @@ function PaySuccess({ data }) {
       <span className="pay-wrap">{data.number}</span>
       <div className="pay-success-actions">
         <Tap id="back-home" className="pay-outline">Back to home</Tap>
-        <Tap id="share" className="pay-circle"><Icon name="share" size={20} /></Tap>
-        <Tap id="receipt" className="pay-circle"><Icon name="doc" size={20} /></Tap>
+        <Tap id="share" className="pay-circle"><Icon name="share" size="1.25rem" /></Tap>
+        <Tap id="receipt" className="pay-circle"><Icon name="doc" size="1.25rem" /></Tap>
       </div>
     </div>
   )
@@ -247,7 +247,7 @@ function EpBanks() {
           <Tap key={id} id={id} className="pay-list">
             <span className="pay-mark">{name[0]}</span>
             {name}
-            <Icon name="chevron" size={18} />
+            <Icon name="chevron" size="1.125rem" />
           </Tap>
         ))}
       </div>
@@ -262,8 +262,8 @@ function EpAccount({ values }) {
       <Head title="Account Details" sub="Bank selected: Meezan Bank" />
       <div className="pay-body">
         <div className="pay-switch">
-          <Tap id="tab-account" className={iban ? 'pay-seg' : 'pay-seg is-on'}><Icon name="user" size={16} /> Account No.</Tap>
-          <Tap id="tab-iban" className={iban ? 'pay-seg is-on' : 'pay-seg'}><Icon name="card" size={16} /> IBAN</Tap>
+          <Tap id="tab-account" className={iban ? 'pay-seg' : 'pay-seg is-on'}><Icon name="user" size="1rem" /> Account No.</Tap>
+          <Tap id="tab-iban" className={iban ? 'pay-seg is-on' : 'pay-seg'}><Icon name="card" size="1rem" /> IBAN</Tap>
         </div>
         <label className="pay-label">
           Enter Receiver&apos;s {iban ? 'IBAN' : 'Account Number'}
@@ -272,7 +272,7 @@ function EpAccount({ values }) {
         {iban && <Tap id="paste" className="pay-chip">Paste</Tap>}
         <label className="pay-label">
           Select Purpose of Payment
-          <div className="pay-input pay-readonly">Others <Icon name="down" size={16} /></div>
+          <div className="pay-input pay-readonly">Others <Icon name="down" size="1rem" /></div>
         </label>
         <Tap id="details-next">Next</Tap>
       </div>
@@ -306,9 +306,9 @@ function RaastExplain({ lang }) {
       <Head title="What is Raast?" />
       <div className="pay-body">
         <div className="raast-flow">
-          <span><Icon name="wallet" size={26} /> easypaisa</span>
-          <b><Icon name="flash" size={22} /></b>
-          <span><Icon name="bank" size={26} /> {tr(lang, 'Bank', 'Bank')}</span>
+          <span><Icon name="wallet" size="1.625rem" /> easypaisa</span>
+          <b><Icon name="flash" size="1.375rem" /></b>
+          <span><Icon name="bank" size="1.625rem" /> {tr(lang, 'Bank', 'Bank')}</span>
         </div>
         <ul className="iban-key">
           <li><b>Raast</b> {tr(lang, 'Run by the State Bank', 'State Bank ka nizam')}</li>
@@ -337,7 +337,7 @@ function EpBills() {
       <div className="pay-body ep-tiles ep-tiles-bills">
         {EP_BILLS.map(([id, icon, label]) => (
           <Tap key={id} id={id} className="ep-tile">
-            <Icon name={icon} size={28} />
+            <Icon name={icon} size="1.75rem" />
             <span>{label}</span>
           </Tap>
         ))}
@@ -355,7 +355,7 @@ function EpCompanies({ data }) {
           <Tap key={id} id={id} className="pay-list">
             <span className="pay-mark">{name[0]}</span>
             {name}
-            <Icon name="chevron" size={18} />
+            <Icon name="chevron" size="1.125rem" />
           </Tap>
         ))}
       </div>
@@ -451,7 +451,7 @@ function JcHome({ balance }) {
       <div className="ep-tiles jc-tiles">
         {JC_TILES.map(([id, icon, label]) => (
           <Tap key={id} id={id} className="ep-tile">
-            <Icon name={icon} size={26} />
+            <Icon name={icon} size="1.625rem" />
             <span>{label}</span>
           </Tap>
         ))}
@@ -510,7 +510,7 @@ function MzHome({ balance }) {
       <div className="ep-tiles jc-tiles">
         {MZ_TILES.map(([id, icon, label]) => (
           <Tap key={id} id={id} className="ep-tile">
-            <Icon name={icon} size={26} />
+            <Icon name={icon} size="1.625rem" />
             <span>{label}</span>
           </Tap>
         ))}

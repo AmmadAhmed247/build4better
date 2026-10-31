@@ -44,7 +44,9 @@ export const URDU = {
   'Ask anything, or paste a message you are not sure about.': 'کچھ بھی پوچھیں، یا مشکوک میسج یہاں پیسٹ کریں۔',
   'Type or paste here': 'یہاں لکھیں یا پیسٹ کریں',
   Send: 'بھیجیں',
+  'Common questions': 'عام سوال',
   'Add photo': 'تصویر',
+  'Remove photo': 'تصویر ہٹائیں',
   'Show an example': 'مثال دکھائیں',
   'Let me look...': 'میں دیکھ رہا ہوں...',
   'Practise this': 'اس کی پریکٹس کریں',
@@ -216,6 +218,9 @@ export const URDU = {
 
   'Government Forms': 'سرکاری فارم',
   'Learn to fill pension and other forms': 'پنشن اور دوسرے فارم بھرنا سیکھیں',
+
+  'My Passbook': 'میری پاس بک',
+  'See your money and practise payments': 'اپنے پیسے دیکھیں اور ادائیگی سیکھیں',
 
   // Help panel
   'Scam Detector': 'دھوکا پکڑیں',
