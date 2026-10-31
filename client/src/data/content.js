@@ -469,6 +469,7 @@ export const UI = {
   askPlaceholder: { en: 'Type or paste here', ru: 'Yahan likhein ya paste karein' },
   askSend: { en: 'Send', ru: 'Bhejein' },
   askPhoto: { en: 'Add photo', ru: 'Tasveer' },
+  askRemovePhoto: { en: 'Remove photo', ru: 'Tasveer hatayein' },
   askExample: { en: 'Show an example', ru: 'Misaal dikhayein' },
   askThinking: { en: 'Let me look...', ru: 'Main dekh raha hoon...' },
   askOpenLesson: { en: 'Practise this', ru: 'Is ki practice karein' },

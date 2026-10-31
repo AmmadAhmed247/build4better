@@ -45,6 +45,7 @@ export const URDU = {
   'Type or paste here': 'یہاں لکھیں یا پیسٹ کریں',
   Send: 'بھیجیں',
   'Add photo': 'تصویر',
+  'Remove photo': 'تصویر ہٹائیں',
   'Show an example': 'مثال دکھائیں',
   'Let me look...': 'میں دیکھ رہا ہوں...',
   'Practise this': 'اس کی پریکٹس کریں',

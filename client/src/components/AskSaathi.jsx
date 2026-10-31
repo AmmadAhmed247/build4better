@@ -1,3 +1,4 @@
+import { X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AvatarFace, useSpeaking } from './Avatar'
 import { LESSONS, UI } from '../data/content'
@@ -157,7 +158,6 @@ export default function AskSaathi({ lang, onOpenLesson }) {
       },
     ])
     setText('')
-    setImage(null)
 
     if (isPrivate) {
       addAnswer({ kind: 'answer', risk: 'none', reply: SECRET_WARNING[lang], warning_signs: [], next_step: '' }, true)
@@ -173,6 +173,7 @@ export default function AskSaathi({ lang, onOpenLesson }) {
         setItems((current) => current.map((item) => (item.id === userId ? { ...item, historyText } : item)))
       }
       addAnswer(answer)
+      if (attachment) removeImage()
       setOnline(true)
     } catch {
       setOnline(false)
@@ -184,6 +185,11 @@ export default function AskSaathi({ lang, onOpenLesson }) {
     } finally {
       setBusy(false)
     }
+  }
+
+  function removeImage() {
+    setImage(null)
+    if (fileRef.current) fileRef.current.value = ''
   }
 
   async function handlePhoto(event) {
@@ -252,7 +258,22 @@ export default function AskSaathi({ lang, onOpenLesson }) {
           send(text)
         }}
       >
-        {image && <img className="ask-preview" src={image.preview} alt="" />}
+        {image && (
+          <div className="relative w-fit" data-guide="ask-attachment">
+            <img className="ask-preview block" src={image.preview} alt="" />
+            <button
+              type="button"
+              data-guide="ask-remove-image"
+              aria-label={UI.askRemovePhoto[lang]}
+              title={UI.askRemovePhoto[lang]}
+              disabled={busy}
+              onClick={removeImage}
+              className="absolute -top-2 -right-2 grid size-9 place-items-center rounded-full border-2 border-white bg-stone-900 text-white shadow disabled:opacity-40"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        )}
         <textarea
           rows={2}
           value={text}
@@ -262,10 +283,10 @@ export default function AskSaathi({ lang, onOpenLesson }) {
         />
         <div className="ask-buttons">
           <input ref={fileRef} type="file" accept="image/*" hidden onChange={handlePhoto} />
-          <button type="button" className="secondary" onClick={() => fileRef.current.click()}>
+          <button type="button" className="secondary" disabled={busy} onClick={() => fileRef.current.click()}>
             {UI.askPhoto[lang]}
           </button>
-          <button type="submit" className="primary" disabled={busy}>
+          <button type="submit" className="primary" disabled={busy || (!text.trim() && !image)}>
             {UI.askSend[lang]}
           </button>
         </div>
