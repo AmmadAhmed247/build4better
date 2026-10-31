@@ -80,6 +80,7 @@ const TEXT = {
 addUrdu(TEXT)
 
 const GREETING = LINES.greeting
+const TILE_TONES = ['bg-lime-700', 'bg-fuchsia-600', 'bg-violet-600', 'bg-sky-700']
 
 const ROUTES = [
   [/scam|fraud|dhoka|دھوکا|فراڈ/i, 'scam'],
@@ -132,7 +133,7 @@ function FontButton({ label, disabled, onClick, children }) {
       title={label}
       disabled={disabled}
       onClick={onClick}
-      className="flex size-12 items-center justify-center rounded-xl border-2 border-stone-700 bg-white text-lg font-bold text-stone-900 disabled:opacity-35"
+      className="flex size-12 items-center justify-center rounded-2xl border-0 bg-white/90 text-lg font-bold text-stone-900 disabled:opacity-45"
     >
       A{children}
     </button>
@@ -466,15 +467,15 @@ export function HelpOverlay({ lang, panel, scamMessage, compact, onPanel, onScam
         }}
         aria-label={TEXT.help[lang]}
         title={TEXT.help[lang]}
-        className={`fixed z-20 flex cursor-grab touch-none items-center border-2 border-blue-700 bg-white text-left text-sm leading-tight font-bold text-blue-900 shadow-lg select-none ${
-          compact ? 'top-[42%] right-0 rounded-l-xl border-r-0 p-0.5' : 'right-3 bottom-24 max-w-44 gap-1.5 rounded-xl px-2 py-1'
+        className={`fixed z-20 flex cursor-grab touch-none items-center border border-white/60 bg-white/90 text-left text-sm leading-tight font-bold text-emerald-900 shadow-lg backdrop-blur-md select-none ${
+          compact ? 'top-[42%] right-0 rounded-l-2xl border-r-0 p-1' : 'right-3 bottom-28 max-w-48 gap-1.5 rounded-2xl px-2 py-1.5'
         }`}
       >
         <span className={`pointer-events-none flex-none ${compact ? 'w-6' : 'w-8'}`}><AvatarFace /></span>
         {!compact && (
           <>
             <span className="pointer-events-none">{TEXT.help[lang]}</span>
-            <GripHorizontal size="0.875rem" className="pointer-events-none flex-none text-blue-400" aria-hidden="true" />
+            <GripHorizontal size="0.875rem" className="pointer-events-none flex-none text-emerald-500" aria-hidden="true" />
           </>
         )}
       </motion.button>
@@ -643,9 +644,9 @@ export default function Dashboard({
   return (
     <MotionConfig reducedMotion="user">
       <main className="min-h-0 flex-1 overflow-y-auto text-stone-900">
-        <header className="sticky top-0 z-10 border-b border-stone-200 bg-white/95">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-2">
-            <strong className="text-2xl text-[#0f5c5c]">Saathi</strong>
+        <header className="sticky top-2 z-10 mx-auto mt-2 w-[calc(100%-1.5rem)] max-w-6xl rounded-3xl border border-white/30 bg-[var(--glass-dark)] shadow-lg backdrop-blur-md">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2">
+            <strong className="text-2xl font-extrabold tracking-tight text-white uppercase">Saathi</strong>
             <div className="flex flex-wrap items-center justify-end gap-2">
               <FontButton label={TEXT.smaller[lang]} disabled={fontStep === 0} onClick={() => onFontStep(fontStep - 1)}>
                 <Minus size="0.875rem" />
@@ -658,7 +659,7 @@ export default function Dashboard({
                 aria-label={UI.language[lang]}
                 title={UI.language[lang]}
                 onClick={onLanguage}
-                className="grid size-12 place-items-center rounded-xl border-2 border-stone-700 bg-white text-stone-900"
+                className="grid size-12 place-items-center rounded-2xl border-0 bg-white/90 text-stone-900"
               >
                 <Languages size="1.375rem" />
               </button>
@@ -667,7 +668,7 @@ export default function Dashboard({
                 data-guide="sos"
                 whileTap={{ scale: 0.96 }}
                 onClick={() => setSosOpen(true)}
-                className="flex min-h-12 items-center gap-2 rounded-xl border-0 bg-red-700 px-3 text-lg font-bold whitespace-nowrap text-white"
+                className="flex min-h-12 items-center gap-2 rounded-2xl border-0 bg-red-700 px-3 text-lg font-bold whitespace-nowrap text-white"
               >
                 <Siren size="1.375rem" /> {TEXT.sos[lang]}
               </motion.button>
@@ -677,7 +678,7 @@ export default function Dashboard({
 
         <div className="mx-auto max-w-6xl p-4 pb-48 wrap-anywhere lg:pb-8">
         <section className="min-w-0">
-          <h1 className="mb-3 text-2xl font-bold">{TEXT.practiceTitle[lang]}</h1>
+          <h1 className="display mt-3 mb-5 text-white [text-shadow:0_2px_20px_rgb(20_40_30/45%)]">{TEXT.practiceTitle[lang]}</h1>
           <div className="grid gap-3 sm:grid-cols-2">
             <motion.button
               type="button"
@@ -685,7 +686,7 @@ export default function Dashboard({
               whileHover={{ y: -3 }}
               whileTap={{ scale: 0.98 }}
               onClick={onBank}
-              className="flex min-h-36 flex-col items-start justify-center gap-1 rounded-3xl border-0 bg-gradient-to-br from-mz-dark to-mz-green p-5 text-left text-white"
+              className="flex min-h-36 flex-col items-start justify-center gap-1 rounded-3xl border border-white/30 bg-[var(--glass-dark)] p-5 text-left text-white shadow-lg backdrop-blur-md"
             >
               <Landmark size="2rem" className="text-mz-gold" />
               <strong className="text-xl">{UI.bankBox[lang]}</strong>
@@ -697,7 +698,7 @@ export default function Dashboard({
               whileHover={{ y: -3 }}
               whileTap={{ scale: 0.98 }}
               onClick={onScenario}
-              className="flex min-h-36 flex-col items-start justify-center gap-1 rounded-3xl border-0 bg-emerald-700 p-5 text-left text-white"
+              className="flex min-h-36 flex-col items-start justify-center gap-1 rounded-3xl border border-white/30 bg-[var(--glass-dark)] p-5 text-left text-white shadow-lg backdrop-blur-md"
             >
               <img src="/brands/easypaisa.png" alt="" className="size-9 rounded-lg bg-white" />
               <strong className="text-xl">{UI.scenarioButton[lang]}</strong>
@@ -705,7 +706,7 @@ export default function Dashboard({
             </motion.button>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {features.map(([key, FeatureIcon, label]) => (
+            {features.map(([key, FeatureIcon, label], index) => (
               <motion.button
                 type="button"
                 key={key}
@@ -713,9 +714,11 @@ export default function Dashboard({
                 whileHover={{ y: -3 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => onFeature(key)}
-                className="flex min-h-44 flex-col items-center justify-center gap-1 rounded-2xl border border-stone-300 bg-white p-3 text-center text-lg font-semibold"
+                className="flex min-h-44 flex-col items-center justify-center gap-1 rounded-3xl border-0 bg-[var(--glass-light)] p-3 text-center text-lg font-semibold shadow-lg"
               >
-                <FeatureIcon size="1.875rem" className={key === 'scam' ? 'text-red-700' : 'text-emerald-800'} />
+                <span className={`mb-1 grid size-14 place-items-center rounded-full text-white ${key === 'scam' ? 'bg-red-700' : TILE_TONES[index % TILE_TONES.length]}`}>
+                  <FeatureIcon size="1.75rem" aria-hidden="true" />
+                </span>
                 {label[lang]}
                 <span className="text-base leading-snug font-normal text-stone-600">{UI.featureHelp[key][lang]}</span>
               </motion.button>

@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react'
+import { ArrowLeft, Check } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { LINES, SCAM, UI, WRONG_TAP } from '../data/content'
 import { useWide } from './Avatar'
@@ -234,8 +234,8 @@ export default function LessonRunner({ lesson, round, lang, setGuide, guide, onE
   return (
     <main className="lesson">
       <header className="lesson-top">
-        <button type="button" className="text-button" onClick={() => onExit()}>
-          ‹ {UI.back[lang]}
+        <button type="button" className="back-button" onClick={() => onExit()}>
+          <ArrowLeft size="1.25rem" className="rtl:rotate-180" aria-hidden="true" /> {UI.back[lang]}
         </button>
         <span>{label}</span>
       </header>

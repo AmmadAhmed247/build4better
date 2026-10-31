@@ -1,3 +1,4 @@
+import { motion, useMotionValue, useReducedMotion, useSpring } from 'framer-motion'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { subscribeSpeaking } from '../lib/speech'
 import { UI } from '../data/content'
@@ -13,21 +14,118 @@ function clamp(value, min, max) {
   return Math.min(Math.max(value, min), Math.max(min, max))
 }
 
+const EYES = [
+  { cx: 29, tilt: -6 },
+  { cx: 71, tilt: 6 },
+]
+const EYE_Y = 50
+const LOOK_X = 6
+const LOOK_Y = 13
+const LOOK_FULL_AT = 140
+const CURSOR_OFFSET_X = 34
+const CURSOR_OFFSET_Y = -6
+const CURSOR_EDGE = 72
+const CURSOR_SPRING = { stiffness: 170, damping: 20, mass: 0.6 }
+
+const pointer = { x: null, y: null, touch: false }
+const pointerListeners = new Set()
+
+function trackPointer(event) {
+  pointer.x = event.clientX
+  pointer.y = event.clientY
+  pointer.touch = event.pointerType === 'touch'
+  pointerListeners.forEach((listener) => listener())
+}
+
+window.addEventListener('pointermove', trackPointer, { passive: true })
+window.addEventListener('pointerdown', trackPointer, { passive: true })
+
+function subscribePointer(listener) {
+  pointerListeners.add(listener)
+  return () => pointerListeners.delete(listener)
+}
+
+// Runs outside React so moving the mouse never re-renders the app.
+function usePupils() {
+  const svgRef = useRef(null)
+
+  useEffect(() => {
+    let frame = null
+    const look = () => {
+      frame = null
+      const svg = svgRef.current
+      if (!svg || pointer.x === null) return
+      const box = svg.getBoundingClientRect()
+      if (box.width === 0) return
+      svg.querySelectorAll('.face-look').forEach((pupil, index) => {
+        const dx = pointer.x - (box.left + (EYES[index].cx / 100) * box.width)
+        const dy = pointer.y - (box.top + (EYE_Y / 100) * box.height)
+        const distance = Math.hypot(dx, dy) || 1
+        const reach = Math.min(distance / LOOK_FULL_AT, 1)
+        pupil.style.transform = `translate(${(dx / distance) * LOOK_X * reach}px, ${(dy / distance) * LOOK_Y * reach}px)`
+      })
+    }
+    const queue = () => {
+      if (frame === null) frame = requestAnimationFrame(look)
+    }
+    queue()
+    const unsubscribe = subscribePointer(queue)
+    return () => {
+      unsubscribe()
+      if (frame !== null) cancelAnimationFrame(frame)
+    }
+  }, [])
+
+  return svgRef
+}
+
 export function AvatarFace({ speaking }) {
+  const svgRef = usePupils()
   return (
-    <svg viewBox="0 0 100 100" className={speaking ? 'face is-speaking' : 'face'} aria-hidden="true">
-      <path className="face-body" d="M18 100 C18 74 32 66 50 66 C68 66 82 74 82 100 Z" />
-      <circle className="face-skin" cx="50" cy="44" r="29" />
-      <path className="face-hair" d="M21 44 C20 16 80 16 79 44 C70 31 58 28 50 33 C42 28 30 31 21 44 Z" />
+    <svg ref={svgRef} viewBox="0 0 100 100" className={speaking ? 'face is-speaking' : 'face'} aria-hidden="true">
       <g className="face-eyes">
-        <circle cx="39" cy="46" r="3.6" />
-        <circle cx="61" cy="46" r="3.6" />
+        {EYES.map(({ cx, tilt }) => (
+          <g key={cx}>
+            <ellipse className="face-eye" cx={cx} cy={EYE_Y} rx="19" ry="28" transform={`rotate(${tilt} ${cx} ${EYE_Y})`} />
+            <g className="face-look">
+              <circle className="face-pupil" cx={cx} cy={EYE_Y} r="12" />
+              <circle className="face-glint" cx={cx - 3} cy={EYE_Y + 6} r="2.4" />
+            </g>
+          </g>
+        ))}
       </g>
-      <circle className="face-glasses" cx="39" cy="46" r="9" />
-      <circle className="face-glasses" cx="61" cy="46" r="9" />
-      <path className="face-glasses" d="M48 46 H52" />
-      <ellipse className="face-mouth" cx="50" cy="60" rx="7" ry="3" />
     </svg>
+  )
+}
+
+// A mouse pointer gets a pair of eyes trailing it. Touch screens have nothing to trail.
+export function CursorEyes({ hidden }) {
+  const [active, setActive] = useState(false)
+  const reduced = useReducedMotion()
+  const x = useMotionValue(0)
+  const y = useMotionValue(0)
+  const smoothX = useSpring(x, CURSOR_SPRING)
+  const smoothY = useSpring(y, CURSOR_SPRING)
+
+  useEffect(() => {
+    const leave = () => setActive(false)
+    const unsubscribe = subscribePointer(() => {
+      setActive(!pointer.touch)
+      x.set(Math.min(pointer.x + CURSOR_OFFSET_X, window.innerWidth - CURSOR_EDGE))
+      y.set(Math.max(pointer.y + CURSOR_OFFSET_Y, 0))
+    })
+    document.documentElement.addEventListener('mouseleave', leave)
+    return () => {
+      unsubscribe()
+      document.documentElement.removeEventListener('mouseleave', leave)
+    }
+  }, [x, y])
+
+  if (hidden || !active) return null
+  return (
+    <motion.div className="cursor-eyes" style={reduced ? { x, y } : { x: smoothX, y: smoothY }}>
+      <AvatarFace />
+    </motion.div>
   )
 }
 

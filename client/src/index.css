@@ -35,7 +35,6 @@ html {
 }
 
 body {
-  background: linear-gradient(180deg, #f0fdf4 0%, #d1fae5 100%) fixed;
   color: var(--ink);
   font-family: 'Segoe UI', Roboto, 'Noto Sans', system-ui, sans-serif;
   font-size: 1.25rem;
@@ -953,67 +952,6 @@ textarea:focus-visible {
   pointer-events: none;
 }
 
-.face {
-  display: block;
-  width: 100%;
-  overflow: visible;
-}
-
-.face-body {
-  fill: var(--teal);
-}
-
-.face-skin {
-  fill: var(--skin);
-}
-
-.face-hair {
-  fill: #e9e5dc;
-}
-
-.face-eyes {
-  fill: var(--ink);
-  transform-origin: 50px 46px;
-  animation: blink 4.5s infinite;
-}
-
-.face-glasses {
-  fill: none;
-  stroke: var(--ink);
-  stroke-width: 2;
-}
-
-.face-mouth {
-  fill: #7c3b30;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-.face-pointer {
-  fill: var(--sun);
-}
-
-.is-speaking .face-mouth {
-  animation: talk 0.28s ease-in-out infinite alternate;
-}
-
-@keyframes talk {
-  to {
-    transform: scaleY(2.6);
-  }
-}
-
-@keyframes blink {
-  0%,
-  95%,
-  100% {
-    transform: scaleY(1);
-  }
-  97% {
-    transform: scaleY(0.1);
-  }
-}
-
 .spotlight {
   position: fixed;
   z-index: 20;
@@ -1064,8 +1002,6 @@ textarea:focus-visible {
     transition: none;
   }
 
-  .face-eyes,
-  .is-speaking .face-mouth,
   .shot-flash .shot-screen {
     animation: none;
   }

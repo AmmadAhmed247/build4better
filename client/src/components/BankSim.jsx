@@ -167,7 +167,7 @@ function Done({ title, rows, children }) {
   )
 }
 
-export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
+export default function BankSim({ lang, away, setGuide, onExit, onRealWorld }) {
   const [stage, setStage] = useState('dash')
   const [balance, setBalance] = useState(START_BALANCE)
   const [hidden, setHidden] = useState(false)
@@ -187,6 +187,8 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
 
   // The avatar first points at Copy, then at Paste once something is copied.
   useEffect(() => {
+    // Stays mounted behind a lesson, so the guide comes back with the page.
+    if (away) return
     const copied = Boolean(clip)
     const steps = {
       dash: [LINE.dash, null],
@@ -206,7 +208,7 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
     }
     const [line, target] = steps[stage]
     setGuide({ line, target })
-  }, [stage, clip, setGuide])
+  }, [stage, clip, away, setGuide])
 
   useEffect(() => () => clearTimeout(toastTimer.current), [])
 
@@ -337,11 +339,11 @@ export default function BankSim({ lang, setGuide, onExit, onRealWorld }) {
   const showPhone = stage === 'topup'
 
   return (
-    <main className="min-h-0 flex-1 overflow-y-auto text-stone-900">
+    <main hidden={away} className="min-h-0 flex-1 overflow-y-auto text-stone-900">
       <header className="sticky top-0 z-10 bg-mz-dark text-white shadow">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-2 px-4 py-2">
           <button type="button" onClick={onExit} className="flex min-h-11 items-center gap-1 border-0 bg-transparent font-semibold text-white">
-            <ArrowLeft size="1.25rem" /> {tr(lang, 'Home', 'Home')}
+            <ArrowLeft size="1.25rem" /> {tr(lang, 'Back', 'Wapas')}
           </button>
           <strong className="whitespace-nowrap text-mz-gold">Meezan Style<span className="hidden sm:inline"> Bank</span></strong>
           <span className="flex-none rounded-full bg-mz-gold px-2 py-0.5 text-sm font-bold whitespace-nowrap text-mz-dark">

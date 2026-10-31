@@ -8,6 +8,27 @@
   --color-mz-green: #0b6b45;
   --color-mz-gold: #d4af37;
   --color-easy: #00a84d;
+
+  /* Every screen's green and blue follow the hills and sky. */
+  --color-emerald-50: #f2f7e8;
+  --color-emerald-100: #e4efd2;
+  --color-emerald-200: #cfe2b0;
+  --color-emerald-300: #b3d08a;
+  --color-emerald-400: #8fb85c;
+  --color-emerald-500: #6f9a3d;
+  --color-emerald-600: #3f7d3a;
+  --color-emerald-700: #2f6a3a;
+  --color-emerald-800: #24543a;
+  --color-emerald-900: #1c4230;
+  --color-emerald-950: #142f23;
+  --color-blue-50: #eaf3f9;
+  --color-blue-100: #d6e7f2;
+  --color-blue-300: #a9cde3;
+  --color-blue-400: #6ba6c9;
+  --color-blue-700: #2c6488;
+  --color-blue-800: #24536f;
+  --color-blue-900: #1c435a;
+  --color-blue-950: #14303f;
 }
 
 .fade-up {

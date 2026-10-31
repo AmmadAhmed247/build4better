@@ -1,0 +1,422 @@
+/* Hills theme: sky, hills, glass and big tight headings. The pretend apps inside .phone keep their own looks. */
+:root {
+  --card: #ffffff;
+  --ink: #17211d;
+  --muted: #47564f;
+  --line: #dde4d6;
+  --teal: #24543a;
+  --teal-soft: #e4efd2;
+  --sun: #d9a400;
+  --sun-soft: #fdf3c4;
+  --green: #2f6a3a;
+  --green-soft: #e4efd2;
+  --glass-dark: rgb(22 44 38 / 62%);
+  --glass-light: rgb(255 255 255 / 94%);
+  --glass-edge: rgb(255 255 255 / 34%);
+  --shadow: 0 12px 32px rgb(20 40 30 / 18%);
+}
+
+body {
+  background: #467499;
+  font-family: 'Inter Tight', 'Segoe UI', Roboto, 'Noto Sans', system-ui, sans-serif;
+}
+
+/* Scenery */
+.scenery {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(180deg, #3f6f96 0%, #5a8fb2 60%, #7aa6bf 100%);
+}
+
+.scenery-hills {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.scenery-cloud {
+  position: absolute;
+  top: -8%;
+  left: 50%;
+  width: min(44rem, 90vw);
+  opacity: 0.86;
+  transform: translateX(-50%);
+  animation: cloud-drift 38s ease-in-out infinite alternate;
+}
+
+@keyframes cloud-drift {
+  from {
+    transform: translateX(-56%) scale(1);
+  }
+
+  to {
+    transform: translateX(-44%) scale(1.06);
+  }
+}
+
+/* Type */
+.display {
+  margin: 0;
+  color: inherit;
+  font-size: clamp(2.1rem, 6vw, 3.25rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+html[lang='ur'] .display {
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  letter-spacing: 0;
+  line-height: 1.8;
+}
+
+/* Page headers */
+.page-hero {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--glass-edge);
+  border-radius: 28px;
+  background: var(--glass-dark);
+  color: #fff;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+}
+
+.page-hero-row {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.page-hero-media {
+  flex: none;
+  width: 4.5rem;
+}
+
+.page-hero-lead {
+  margin-top: 6px;
+  font-size: 1.15rem;
+}
+
+.back-button {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-self: start;
+  min-height: 48px;
+  padding: 6px 18px 6px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--teal);
+  font-weight: 700;
+}
+
+/* Bottom dock */
+.nav {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex: none;
+  gap: 6px;
+  align-self: center;
+  width: min(calc(100% - 1.5rem), 30rem);
+  margin: 8px 0 12px;
+  padding: 7px;
+  border: 1px solid rgb(255 255 255 / 60%);
+  border-radius: 26px;
+  background: rgb(255 255 255 / 58%);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px);
+}
+
+.nav-item {
+  position: relative;
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  justify-items: center;
+  min-height: 68px;
+  border-radius: 19px;
+  background: rgb(255 255 255 / 88%);
+  color: var(--teal);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.nav-item.is-active {
+  background: rgb(255 255 255 / 88%);
+  color: #fff;
+}
+
+.nav-active {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--teal);
+}
+
+.nav-item > svg,
+.nav-item > span:not(.nav-active) {
+  position: relative;
+}
+
+/* Glass surfaces */
+.page,
+.ask,
+.lesson {
+  animation: page-in 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+.ask[hidden] {
+  display: none;
+}
+
+.practice-card,
+.tip-card,
+.provider-tab,
+.reply,
+.ask-form,
+.done {
+  border-color: transparent;
+  border-radius: 24px;
+  background: var(--glass-light);
+  box-shadow: var(--shadow);
+}
+
+.provider-tab.is-active {
+  border-color: var(--teal);
+  background: var(--teal-soft);
+}
+
+.primary,
+.secondary {
+  border-radius: 18px;
+  transition: transform 0.15s ease, filter 0.15s ease;
+}
+
+.primary:hover:not(:disabled),
+.secondary:hover:not(:disabled) {
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+}
+
+.round-choice {
+  border-radius: 16px;
+}
+
+.card-icon {
+  border-radius: 50%;
+  background: var(--teal-soft);
+  color: var(--teal);
+}
+
+/* Language */
+.language {
+  width: min(calc(100% - 2rem), 28rem);
+  min-height: 0;
+  margin: auto;
+  padding: 24px;
+  border: 1px solid var(--glass-edge);
+  border-radius: 32px;
+  background: var(--glass-dark);
+  color: #fff;
+  backdrop-filter: blur(14px);
+}
+
+.language .back-button {
+  justify-self: start;
+  align-self: flex-start;
+}
+
+.language .primary {
+  background: #fff;
+  color: var(--teal);
+}
+
+/* Lesson frame */
+.lesson-top {
+  margin: 8px 16px;
+  padding: 6px 14px 6px 6px;
+  border-radius: 999px;
+  background: var(--glass-dark);
+  color: #fff;
+  backdrop-filter: blur(14px);
+}
+
+.lesson-top .back-button {
+  min-height: 44px;
+  text-decoration: none;
+}
+
+.dock {
+  margin: 8px 16px 12px;
+  border-radius: 24px;
+  background: var(--glass-light);
+  box-shadow: var(--shadow);
+}
+
+.phone {
+  box-shadow: 0 18px 44px rgb(20 40 30 / 32%);
+}
+
+.bubble {
+  border-color: transparent;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+
+/* Ask Saathi */
+.ask-head {
+  margin: 8px 16px;
+  border: 1px solid var(--glass-edge);
+  border-radius: 24px;
+  background: var(--glass-dark);
+  color: #fff;
+  backdrop-filter: blur(14px);
+}
+
+.ask-head p,
+.ask-busy {
+  color: #fff;
+}
+
+.ask-busy {
+  align-self: flex-start;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--glass-dark);
+}
+
+.ask-form {
+  margin: 0 16px 8px;
+  border-top: 0;
+}
+
+/* Finish */
+.done {
+  flex: none;
+  width: min(calc(100% - 2rem), 30rem);
+  max-height: calc(100% - 2rem);
+  margin: auto;
+  padding: 24px;
+}
+
+.done-stats {
+  background: var(--teal-soft);
+}
+
+/* Avatar eyes */
+.face {
+  display: block;
+  width: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 2px 3px rgb(20 40 30 / 35%));
+}
+
+.face-eye {
+  fill: #fff;
+  stroke: rgb(23 33 29 / 28%);
+  stroke-width: 1.5;
+}
+
+.face-pupil {
+  fill: #0b0b0b;
+}
+
+.face-glint {
+  fill: #fff;
+}
+
+.face-look {
+  transition: transform 0.09s linear;
+}
+
+.face-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: blink 4.5s infinite;
+}
+
+.is-speaking .face-eyes {
+  animation: eye-talk 0.34s ease-in-out infinite alternate;
+}
+
+@keyframes eye-talk {
+  to {
+    transform: translateY(-5%) scale(1.06);
+  }
+}
+
+@keyframes blink {
+  0%,
+  95%,
+  100% {
+    transform: scaleY(1);
+  }
+
+  97% {
+    transform: scaleY(0.08);
+  }
+}
+
+.cursor-eyes {
+  position: fixed;
+  z-index: 70;
+  top: 0;
+  left: 0;
+  width: 3.5rem;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scenery-cloud,
+  .page,
+  .ask,
+  .lesson,
+  .face-eyes,
+  .is-speaking .face-eyes {
+    animation: none;
+  }
+
+  .face-look {
+    transition: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .done {
+    margin-bottom: 150px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .dock {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .lesson .dock-caption {
+    padding: 10px 14px;
+    border-radius: 18px;
+    background: var(--glass-light);
+  }
+
+  .lesson-top {
+    margin: 8px 0;
+  }
+}
