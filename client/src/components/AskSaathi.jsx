@@ -217,18 +217,19 @@ export default function AskSaathi({ lang, onOpenLesson }) {
 
       <div className="ask-list">
         {items.length === 0 && (
-          <>
-            <div className="flex flex-wrap gap-2" data-guide="ask-starters">
+          <section className="rounded-2xl border-2 border-emerald-200 bg-white p-3 shadow-sm" data-guide="ask-starters-box">
+            <h2 className="mb-2 text-lg font-bold text-emerald-900">{UI.askStarters[lang]}</h2>
+            <div className="grid gap-2 sm:grid-cols-2" data-guide="ask-starters">
               {STARTER_QUESTIONS.map((question) => (
                 <button type="button" className="secondary" key={question} disabled={busy} onClick={() => send(question)}>
                   {question}
                 </button>
               ))}
+              <button type="button" className="secondary" onClick={() => setText(UI.example)}>
+                {UI.askExample[lang]}
+              </button>
             </div>
-            <button type="button" className="secondary" onClick={() => setText(UI.example)}>
-              {UI.askExample[lang]}
-            </button>
-          </>
+          </section>
         )}
         {items.map((item, index) =>
           item.role === 'user' ? (
@@ -271,7 +272,7 @@ export default function AskSaathi({ lang, onOpenLesson }) {
               onClick={removeImage}
               className="absolute -top-2 -right-2 grid size-9 place-items-center rounded-full border-2 border-white bg-stone-900 text-white shadow disabled:opacity-40"
             >
-              <X size={18} />
+              <X size="1.125rem" />
             </button>
           </div>
         )}

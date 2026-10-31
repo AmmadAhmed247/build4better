@@ -66,7 +66,7 @@ function Bubble({ message }) {
       <div className={`max-w-[80%] rounded-xl px-3 py-2 text-lg shadow-sm ${message.mine ? 'bg-[#d9fdd3]' : 'bg-white'}`}>
         {message.voice ? (
           <span className="flex items-center gap-2 py-1">
-            <Play size={22} className="text-[#00806a]" />
+            <Play size="1.375rem" className="text-[#00806a]" />
             <span className="h-1 w-28 rounded bg-[#00806a]/50" aria-hidden="true" />
             {duration(message.voice)}
           </span>
@@ -74,7 +74,7 @@ function Bubble({ message }) {
           <p className="wrap-anywhere">{message.text}</p>
         )}
         <p className="mt-0.5 flex items-center justify-end gap-1 text-sm text-stone-600">
-          {message.time} {message.mine && <CheckCheck size={16} className="text-sky-600" />}
+          {message.time} {message.mine && <CheckCheck size="1rem" className="text-sky-600" />}
         </p>
       </div>
     </div>
@@ -90,7 +90,7 @@ function CallModal({ call, chat, seconds, lang, onMute, onCamera, onEnd }) {
         <h2 className="text-2xl font-bold">{chat.name}</h2>
         <p className="text-xl" role="status">{label}</p>
         <p className="flex items-center gap-2 text-lg">
-          {call.video ? <Video size={22} /> : <Phone size={22} />} {call.video ? 'Video call' : 'Voice call'}
+          {call.video ? <Video size="1.375rem" /> : <Phone size="1.375rem" />} {call.video ? 'Video call' : 'Voice call'}
         </p>
       </div>
       {call.camera && <SelfView lang={lang} className="h-32 w-44 rounded-xl bg-black object-cover -scale-x-100 p-1 text-center text-base" />}
@@ -102,7 +102,7 @@ function CallModal({ call, chat, seconds, lang, onMute, onCamera, onEnd }) {
           onClick={onMute}
           className={`grid size-20 place-items-center rounded-full border-0 text-sm font-bold disabled:opacity-40 ${call.muted ? 'bg-amber-500 text-black' : 'bg-white text-black'}`}
         >
-          {call.muted ? <MicOff size={26} /> : <Mic size={26} />}
+          {call.muted ? <MicOff size="1.625rem" /> : <Mic size="1.625rem" />}
           {call.muted ? 'Unmute' : 'Mute'}
         </button>
         {call.video && (
@@ -113,7 +113,7 @@ function CallModal({ call, chat, seconds, lang, onMute, onCamera, onEnd }) {
             onClick={onCamera}
             className="grid size-20 place-items-center rounded-full border-0 bg-white text-sm font-bold text-black disabled:opacity-40"
           >
-            {call.camera ? <VideoOff size={26} /> : <Video size={26} />}
+            {call.camera ? <VideoOff size="1.625rem" /> : <Video size="1.625rem" />}
             Camera
           </button>
         )}
@@ -124,7 +124,7 @@ function CallModal({ call, chat, seconds, lang, onMute, onCamera, onEnd }) {
           onClick={onEnd}
           className="grid size-20 place-items-center rounded-full border-0 bg-red-600 text-white transition hover:bg-red-700"
         >
-          <PhoneOff size={34} />
+          <PhoneOff size="2.125rem" />
         </button>
       </div>
     </div>
@@ -342,13 +342,13 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
   return (
     <main className="min-h-0 flex-1 overflow-y-auto p-2 pb-32 text-stone-900 lg:p-4 lg:pb-4">
       <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-[1fr_280px]">
-        <div className="relative flex h-[calc(100dvh-9.5rem)] min-h-[440px] flex-col overflow-hidden rounded-2xl border border-stone-400 bg-white shadow-lg lg:h-[calc(100dvh-2rem)]">
+        <div className="relative flex h-[calc(min(100dvh,var(--shell-height))-9.5rem)] min-h-[440px] flex-col overflow-hidden rounded-2xl border border-stone-400 bg-white shadow-lg lg:h-[calc(min(100dvh,var(--shell-height))-2rem)]">
           {!open && phone && (
             <div className="flex flex-1 flex-col bg-gradient-to-b from-indigo-900 via-purple-800 to-rose-700 text-white">
               <div className="flex items-center justify-between px-4 py-2 text-base font-semibold">
                 <span>{clock()}</span>
                 <span className="flex items-center gap-2">
-                  <Wifi size={18} /> <BatteryFull size={20} />
+                  <Wifi size="1.125rem" /> <BatteryFull size="1.25rem" />
                 </span>
               </div>
               <span className="mx-auto mb-3 rounded-full bg-mz-gold px-3 py-1 font-bold text-mz-dark">
@@ -371,7 +371,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                     className="grid justify-items-center gap-1 border-0 bg-transparent p-0 text-sm font-medium text-white"
                   >
                     <span className={`grid size-15 place-items-center rounded-2xl text-3xl font-bold shadow ${tone}`}>
-                      {typeof Mark === 'string' ? Mark : <Mark size={32} fill={id === 'wa-icon' ? 'white' : 'none'} />}
+                      {typeof Mark === 'string' ? Mark : <Mark size="2rem" fill={id === 'wa-icon' ? 'white' : 'none'} />}
                     </span>
                     {label}
                   </button>
@@ -382,7 +382,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                 onClick={onExit}
                 className="mx-auto mt-auto mb-3 flex min-h-12 items-center gap-1 rounded-full border-0 bg-black/40 px-5 text-lg font-semibold text-white"
               >
-                <ArrowLeft size={20} /> {tr(lang, 'Home', 'Home')}
+                <ArrowLeft size="1.25rem" /> {tr(lang, 'Home', 'Home')}
               </button>
             </div>
           )}
@@ -403,7 +403,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                   className="grid w-28 justify-items-center gap-1 rounded-xl border-0 bg-transparent p-2 text-lg font-semibold text-white transition hover:bg-white/20"
                 >
                   <span className="grid size-16 place-items-center rounded-2xl bg-[#00a884] shadow">
-                    <MessageCircle size={38} fill="white" className="text-white" />
+                    <MessageCircle size="2.375rem" fill="white" className="text-white" />
                   </span>
                   WhatsApp
                 </button>
@@ -420,7 +420,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                     className="grid w-28 justify-items-center gap-1 rounded-xl border-0 bg-transparent p-2 text-lg font-semibold text-white transition hover:bg-white/20"
                   >
                     <span className="grid size-16 place-items-center rounded-2xl bg-white/20">
-                      <Icon size={36} />
+                      <Icon size="2.25rem" />
                     </span>
                     {label}
                   </button>
@@ -432,7 +432,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                   onClick={onExit}
                   className="flex min-h-11 items-center gap-1 border-0 bg-transparent text-lg font-semibold text-white"
                 >
-                  <ArrowLeft size={20} /> {tr(lang, 'Home', 'Home')}
+                  <ArrowLeft size="1.25rem" /> {tr(lang, 'Home', 'Home')}
                 </button>
                 <span className="text-lg">{clock()}</span>
               </div>
@@ -449,7 +449,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                   onClick={closeWindow}
                   className="grid size-11 place-items-center border-0 bg-transparent text-white"
                 >
-                  <X size={24} />
+                  <X size="1.5rem" />
                 </button>
               </div>
               <div data-guide="wa-lessons" className="flex gap-2 overflow-x-auto bg-[#f0f2f5] p-2">
@@ -471,7 +471,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
               <div className="relative flex min-h-0 flex-1">
                 <aside className={`${showList ? 'flex' : 'hidden'} w-full flex-col border-r border-stone-300 bg-white md:flex md:w-80 md:flex-none`}>
                   <label className="m-2 flex items-center gap-2 rounded-xl bg-[#f0f2f5] px-3">
-                    <Search size={20} />
+                    <Search size="1.25rem" />
                     <input
                       value={query}
                       onChange={(event) => setQuery(event.target.value)}
@@ -513,7 +513,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                       onClick={() => setShowList(true)}
                       className="grid size-11 flex-none place-items-center border-0 bg-transparent md:hidden"
                     >
-                      <ArrowLeft size={24} />
+                      <ArrowLeft size="1.5rem" />
                     </button>
                     <Face chat={active} size="size-12" />
                     <div className="min-w-0 flex-1">
@@ -528,7 +528,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                         onClick={() => startCall(true)}
                         className="grid size-12 place-items-center rounded-full border-0 bg-transparent transition hover:bg-stone-300"
                       >
-                        <Video size={26} />
+                        <Video size="1.625rem" />
                       </button>
                       <button
                         type="button"
@@ -537,7 +537,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                         onClick={() => startCall(false)}
                         className="grid size-12 place-items-center rounded-full border-0 bg-transparent transition hover:bg-stone-300"
                       >
-                        <Phone size={26} />
+                        <Phone size="1.625rem" />
                       </button>
                     </div>
                   </header>
@@ -569,7 +569,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                           onClick={notHere}
                           className="hidden size-12 flex-none place-items-center border-0 bg-transparent sm:grid"
                         >
-                          <Smile size={26} />
+                          <Smile size="1.625rem" />
                         </button>
                         <button
                           type="button"
@@ -578,7 +578,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                           onClick={notHere}
                           className="grid size-12 flex-none place-items-center border-0 bg-transparent"
                         >
-                          <Paperclip size={26} />
+                          <Paperclip size="1.625rem" />
                         </button>
                         <input
                           data-guide="wa-input"
@@ -602,7 +602,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                         data-guide="wa-send"
                         className="grid size-14 flex-none place-items-center rounded-full border-0 bg-[#00806a] text-white transition hover:brightness-95"
                       >
-                        <SendHorizontal size={26} />
+                        <SendHorizontal size="1.625rem" />
                       </button>
                     ) : (
                       <button
@@ -624,7 +624,7 @@ export default function WhatsAppSim({ lang, setGuide, onExit }) {
                           recording ? 'scale-110 bg-red-600' : 'bg-[#00806a]'
                         }`}
                       >
-                        <Mic size={28} />
+                        <Mic size="1.75rem" />
                       </button>
                     )}
                   </form>

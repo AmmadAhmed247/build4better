@@ -1,4 +1,4 @@
-import { Camera, Check, CreditCard, FileText, Landmark, MessageCircle, MessagesSquare, Search, ShieldAlert, Sparkles, Video, VolumeX } from 'lucide-react'
+import { BookOpen, Camera, Check, CreditCard, FileText, Landmark, MessageCircle, MessagesSquare, Search, ShieldAlert, Sparkles, Video, VolumeX } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import AskSaathi from './components/AskSaathi'
 import Avatar, { AvatarFace, useSpeaking } from './components/Avatar'
@@ -6,18 +6,20 @@ import BankSim from './components/BankSim'
 import GovernmentFormAssistant from './components/GovernmentFormAssistant'
 import Dashboard, { HelpOverlay } from './components/Dashboard'
 import LessonRunner from './components/LessonRunner'
+import Passbook from './components/Passbook'
 import WhatsAppSim from './components/WhatsAppSim'
 import { LESSONS, LINES, PROVIDERS, TIPS, UI } from './data/content'
 import { skipSpeaking, speak, stopSpeaking } from './lib/speech'
 import { loadState, saveState } from './lib/storage'
 
 const ASK_HINT_DELAY_MS = 30000
-const FONT_SCALES = [100, 115, 130]
+const FONT_SCALES = [1, 1.15, 1.3]
 
 const FEATURES = [
   ['lessons', CreditCard, UI.featureLessons],
   ['scam', ShieldAlert, UI.scamBox],
   ['forms', FileText, UI.formsBox],
+  ['passbook', BookOpen, UI.passbookBox],
   ['whatsapp', MessagesSquare, { en: 'WhatsApp', ru: 'WhatsApp' }],
   ['video', Video, LESSONS.video.title],
   ['screenshot', Camera, LESSONS.screenshot.title],
@@ -130,7 +132,7 @@ function App() {
   }, [guide, lang])
 
   useEffect(() => {
-    document.documentElement.style.fontSize = `${FONT_SCALES[fontStep]}%`
+    document.documentElement.style.setProperty('--font-scale', FONT_SCALES[fontStep])
   }, [fontStep])
 
   useEffect(() => {
@@ -210,7 +212,7 @@ function App() {
     setHelpPanel(null)
     if (key === 'bank') go('bank')
     else if (key === 'scenario') startLesson('scenario', 3)
-    else if (['lessons', 'ask', 'whatsapp', 'forms'].includes(key)) go(key)
+    else if (['lessons', 'ask', 'whatsapp', 'forms', 'passbook'].includes(key)) go(key)
     else startLesson(key, 1)
   }
 
@@ -308,6 +310,8 @@ function App() {
         </main>
       )}
 
+      {view === 'passbook' && <Passbook lang={lang} onStart={(id) => startLesson(id, 1)} onExit={() => go('home')} />}
+
       {view === 'forms' && <GovernmentFormAssistant lang={lang} setGuide={setGuide} onExit={() => go('home')} />}
 
       {view === 'whatsapp' && <WhatsAppSim lang={lang} setGuide={setGuide} onExit={() => go('home')} />}
@@ -333,7 +337,7 @@ function App() {
 
       {view === 'ask' && <AskSaathi lang={lang} onOpenLesson={(id) => startLesson(id, 1)} />}
 
-      {!['lesson', 'bank', 'whatsapp', 'forms'].includes(view) && (
+      {!['lesson', 'bank', 'whatsapp', 'forms', 'passbook'].includes(view) && (
         <nav className="nav">
           {[
             ['home', 'nav-practice', UI.practice],
@@ -353,7 +357,7 @@ function App() {
         </nav>
       )}
 
-      {view !== 'ask' && (!['home', 'lessons', 'tips', 'forms'].includes(view) || guide?.line) && (
+      {view !== 'ask' && (!['home', 'lessons', 'tips', 'forms', 'passbook'].includes(view) || guide?.line) && (
         <Avatar guide={guide} lang={lang} onSkip={endIntro} />
       )}
     </div>

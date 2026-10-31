@@ -209,7 +209,7 @@ function InfoButton({ label, onClick }) {
       onClick={onClick}
       className="grid size-12 flex-none place-items-center rounded-full border-2 border-emerald-700 bg-emerald-50 text-emerald-800 transition hover:bg-emerald-100"
     >
-      <Info size={26} />
+      <Info size="1.625rem" />
     </button>
   )
 }
@@ -258,7 +258,7 @@ function InfoModal({ info, lang, onClose }) {
             onClick={onClose}
             className="grid size-12 flex-none place-items-center rounded-xl border-2 border-stone-300 bg-white"
           >
-            <X size={24} />
+            <X size="1.5rem" />
           </button>
         </div>
         <p className="mt-4 text-xl leading-relaxed">{info.help[lang]}</p>
@@ -272,7 +272,7 @@ function InfoModal({ info, lang, onClose }) {
           onClick={() => speak({ ...info.help, live: true }, lang)}
           className="mt-4 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border-0 bg-emerald-700 text-lg font-bold text-white"
         >
-          <Volume2 size={24} /> {TEXT.listen[lang]}
+          <Volume2 size="1.5rem" /> {TEXT.listen[lang]}
         </button>
       </motion.div>
     </motion.div>
@@ -328,7 +328,7 @@ function PensionForm({ lang, onInfo, setGuide }) {
   if (finished) {
     return (
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="text-center">
-        <CheckCircle2 size={84} className="mx-auto text-emerald-700" />
+        <CheckCircle2 size="5.25rem" className="mx-auto text-emerald-700" />
         <h2 className="mt-2 text-3xl font-bold text-emerald-900">{TEXT.doneTitle[lang]}</h2>
         <p className="my-4 text-xl leading-relaxed">{TEXT.doneText[lang]}</p>
         <button type="button" onClick={restart} className="min-h-14 w-full rounded-2xl border-0 bg-emerald-700 text-xl font-bold text-white">
@@ -443,7 +443,7 @@ function GenericHelper({ lang, onInfo }) {
         {COMMON_FIELDS.map((item) => (
           <div key={item.id} className="flex items-center justify-between gap-3 rounded-2xl bg-emerald-50 p-3">
             <span className="flex min-w-0 items-center gap-2 text-lg font-semibold">
-              <FileText size={22} className="flex-none text-emerald-700" /> {item.label[lang]}
+              <FileText size="1.375rem" className="flex-none text-emerald-700" /> {item.label[lang]}
             </span>
             <InfoButton label={`${TEXT.infoAbout[lang]}: ${item.label[lang]}`} onClick={() => onInfo(item)} />
           </div>
@@ -452,7 +452,7 @@ function GenericHelper({ lang, onInfo }) {
 
       <form onSubmit={ask} className="mt-5">
         <h2 className="mb-2 flex items-center gap-2 text-2xl font-bold text-emerald-900">
-          <Lightbulb size={26} /> {TEXT.askTitle[lang]}
+          <Lightbulb size="1.625rem" /> {TEXT.askTitle[lang]}
         </h2>
         <label htmlFor={wordId} className="mb-1 block text-lg font-semibold">{TEXT.askLabel[lang]}</label>
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -471,7 +471,7 @@ function GenericHelper({ lang, onInfo }) {
             disabled={!word.trim() || busy}
             className="flex min-h-14 flex-none items-center justify-center gap-2 rounded-2xl border-0 bg-emerald-700 px-5 text-lg font-bold text-white disabled:opacity-40"
           >
-            {busy ? <LoaderCircle size={22} className="animate-spin" /> : <Search size={22} />}
+            {busy ? <LoaderCircle size="1.375rem" className="animate-spin" /> : <Search size="1.375rem" />}
             {busy ? TEXT.asking[lang] : TEXT.ask[lang]}
           </button>
         </div>
@@ -512,7 +512,7 @@ export default function GovernmentFormAssistant({ lang, setGuide, onExit }) {
             onClick={onExit}
             className="flex min-h-12 items-center gap-1 border-0 bg-transparent text-lg font-semibold text-emerald-900"
           >
-            <ArrowLeft size={22} /> {TEXT.home[lang]}
+            <ArrowLeft size="1.375rem" /> {TEXT.home[lang]}
           </button>
 
           <header className="my-3 flex items-center gap-3">
@@ -530,7 +530,7 @@ export default function GovernmentFormAssistant({ lang, setGuide, onExit }) {
           </header>
 
           <p className="mb-4 flex items-start gap-2 rounded-2xl bg-white/80 p-3 text-lg text-emerald-950">
-            <ShieldCheck size={24} className="mt-0.5 flex-none text-emerald-700" /> {TEXT.privacy[lang]}
+            <ShieldCheck size="1.5rem" className="mt-0.5 flex-none text-emerald-700" /> {TEXT.privacy[lang]}
           </p>
 
           <div role="tablist" aria-label={TEXT.title[lang]} className="mb-4 grid grid-cols-2 gap-2">

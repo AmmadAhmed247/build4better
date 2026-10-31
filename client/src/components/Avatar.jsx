@@ -2,8 +2,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { subscribeSpeaking } from '../lib/speech'
 import { UI } from '../data/content'
 
-const SIZE = 76
-const SMALL = 56
+const BASE_SIZE = 76
+const BASE_SMALL = 56
+const BASE_BUBBLE = 340
 const GAP = 8
 const EDGE = 16
 const WIDE_FROM = 1024
@@ -50,30 +51,52 @@ function findTarget(key) {
   return key ? document.querySelector(`[data-guide="${key}"]`) : null
 }
 
-function toBox(element) {
+function toBox(element, frame) {
   if (!element) return null
   const { left, top, right, bottom, width, height } = element.getBoundingClientRect()
   const follow = 'follow' in element.dataset
-  return width > 0 ? { left, top, right, bottom, width, height, follow } : null
+  if (width === 0) return null
+  return {
+    left: left - frame.left,
+    top: top - frame.top,
+    right: right - frame.left,
+    bottom: bottom - frame.top,
+    width,
+    height,
+    follow,
+  }
 }
 
 function measure(targetKey) {
   const element = findTarget(targetKey)
+  // Fixed layers start inside the frame's border.
+  const shell = document.querySelector('.shell')
+  const outer = shell.getBoundingClientRect()
+  const frame = {
+    left: outer.left + shell.clientLeft,
+    top: outer.top + shell.clientTop,
+    width: shell.clientWidth,
+    height: shell.clientHeight,
+  }
   return {
     // Some inputs sit inside a bigger visible box, so ring that box.
-    target: toBox(element?.closest('[data-ring]') ?? element),
-    phone: toBox(element?.closest('.phone')),
-    dock: toBox(findTarget('dock-avatar')),
-    slot: toBox(findTarget('side-slot')),
-    nav: toBox(findTarget('nav-tips')),
-    width: window.innerWidth,
-    height: window.innerHeight,
+    target: toBox(element?.closest('[data-ring]') ?? element, frame),
+    phone: toBox(element?.closest('.phone'), frame),
+    dock: toBox(findTarget('dock-avatar'), frame),
+    slot: toBox(findTarget('side-slot'), frame),
+    nav: toBox(findTarget('nav-tips'), frame),
+    width: frame.width,
+    height: frame.height,
+    scale: parseFloat(getComputedStyle(document.documentElement).fontSize) / 16,
   }
 }
 
 // Avatar and bubble stay clear of the app: beside it on wide screens, in a corner on phones.
-function place({ target, phone, dock, slot, nav, width, height }, bubbleHeight) {
+function place({ target, phone, dock, slot, nav, width, height, scale }, bubbleHeight) {
   const wide = width >= WIDE_FROM
+  const SIZE = BASE_SIZE * scale
+  const SMALL = BASE_SMALL * scale
+  const bubbleLimit = BASE_BUBBLE * scale
 
   // Some screens fill the page, so the avatar walks over while the text stays in the side column.
   if (wide && slot && slot.follow) {
@@ -105,16 +128,16 @@ function place({ target, phone, dock, slot, nav, width, height }, bubbleHeight) 
       bubble: {
         left,
         top: clamp(y, GAP, height - bubbleHeight - GAP),
-        width: clamp(width - left - EDGE, 180, 340),
+        width: clamp(width - left - EDGE, 180, bubbleLimit),
       },
     }
   }
 
   const floor = nav ? nav.top - GAP * 2 : height - GAP
   const bubble = {
-    left: clamp((width - Math.min(340, width - EDGE * 2)) / 2, EDGE, width),
+    left: clamp((width - Math.min(bubbleLimit, width - EDGE * 2)) / 2, EDGE, width),
     top: floor - bubbleHeight - GAP,
-    width: Math.min(340, width - EDGE * 2),
+    width: Math.min(bubbleLimit, width - EDGE * 2),
   }
 
   if (target) {

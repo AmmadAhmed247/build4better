@@ -159,7 +159,7 @@ function ScamResult({ answer, lang }) {
     >
       {answer.kind === 'scam_check' && (
         <p className="flex items-center gap-2 text-xl font-bold">
-          <Icon size={28} /> {UI.risk[risk][lang]}
+          <Icon size="1.75rem" /> {UI.risk[risk][lang]}
         </p>
       )}
       <p className="mt-1">{answer.reply}</p>
@@ -202,7 +202,7 @@ function ScamPanel({ lang, message, onMessage }) {
   return (
     <>
       <h2 className="flex items-center gap-2 pr-14 text-2xl font-bold text-red-800">
-        <ShieldAlert size={28} /> {TEXT.scamTitle[lang]}
+        <ShieldAlert size="1.75rem" /> {TEXT.scamTitle[lang]}
       </h2>
       <ol className="my-3 list-decimal pl-7 text-lg">
         <li>{TEXT.stepOne[lang]}</li>
@@ -344,7 +344,7 @@ function HelpPanel({ lang, onOpen }) {
             onClick={() => speak(GREETING, lang)}
             className="mt-1 flex min-h-11 items-center gap-1 border-0 bg-transparent text-lg font-semibold text-blue-800 underline"
           >
-            <Volume2 size={20} /> {TEXT.listen[lang]}
+            <Volume2 size="1.25rem" /> {TEXT.listen[lang]}
           </button>
         </div>
       </div>
@@ -373,9 +373,9 @@ function HelpPanel({ lang, onOpen }) {
               status === 'listening' ? 'bg-red-700' : 'bg-blue-700'
             }`}
           >
-            {status === 'idle' && <Mic size={44} />}
-            {status === 'listening' && <Square size={38} fill="white" />}
-            {status === 'thinking' && <LoaderCircle size={44} className="animate-spin" />}
+            {status === 'idle' && <Mic size="2.75rem" />}
+            {status === 'listening' && <Square size="2.375rem" fill="white" />}
+            {status === 'thinking' && <LoaderCircle size="2.75rem" className="animate-spin" />}
           </motion.button>
         </div>
         <p className="text-center text-xl font-semibold" role="status">{label}</p>
@@ -474,7 +474,7 @@ export function HelpOverlay({ lang, panel, scamMessage, compact, onPanel, onScam
         {!compact && (
           <>
             <span className="pointer-events-none">{TEXT.help[lang]}</span>
-            <GripHorizontal size={14} className="pointer-events-none flex-none text-blue-400" aria-hidden="true" />
+            <GripHorizontal size="0.875rem" className="pointer-events-none flex-none text-blue-400" aria-hidden="true" />
           </>
         )}
       </motion.button>
@@ -509,7 +509,7 @@ export function HelpOverlay({ lang, panel, scamMessage, compact, onPanel, onScam
               onClick={() => onPanel(null)}
               className="absolute top-4 right-4 z-10 grid size-12 place-items-center rounded-xl border-2 border-stone-300 bg-white"
             >
-              <X size={24} />
+              <X size="1.5rem" />
             </button>
             {panel === 'help' ? (
               <HelpPanel
@@ -576,7 +576,7 @@ function SosDialog({ lang, number, onSave, onClose }) {
             onClick={onClose}
             className="grid size-12 flex-none place-items-center rounded-xl border-2 border-stone-300 bg-white"
           >
-            <X size={24} />
+            <X size="1.5rem" />
           </button>
         </div>
         <p className="my-3 rounded-2xl bg-amber-50 p-3 text-lg">{TEXT.sosCalm[lang]}</p>
@@ -607,7 +607,7 @@ function SosDialog({ lang, number, onSave, onClose }) {
               href={`tel:${number}`}
               className="flex min-h-16 items-center justify-center gap-2 rounded-2xl bg-red-700 px-3 text-center text-xl font-bold text-white no-underline"
             >
-              <Phone size={26} /> {TEXT.sosCall[lang]}
+              <Phone size="1.625rem" /> {TEXT.sosCall[lang]}
             </a>
             <a
               href={`sms:${number}?body=${encodeURIComponent(TEXT.sosBody[lang])}`}
@@ -648,10 +648,10 @@ export default function Dashboard({
             <strong className="text-2xl text-[#0f5c5c]">Saathi</strong>
             <div className="flex flex-wrap items-center justify-end gap-2">
               <FontButton label={TEXT.smaller[lang]} disabled={fontStep === 0} onClick={() => onFontStep(fontStep - 1)}>
-                <Minus size={14} />
+                <Minus size="0.875rem" />
               </FontButton>
               <FontButton label={TEXT.bigger[lang]} disabled={fontStep === fontSteps - 1} onClick={() => onFontStep(fontStep + 1)}>
-                <Plus size={14} />
+                <Plus size="0.875rem" />
               </FontButton>
               <button
                 type="button"
@@ -660,7 +660,7 @@ export default function Dashboard({
                 onClick={onLanguage}
                 className="grid size-12 place-items-center rounded-xl border-2 border-stone-700 bg-white text-stone-900"
               >
-                <Languages size={22} />
+                <Languages size="1.375rem" />
               </button>
               <motion.button
                 type="button"
@@ -669,7 +669,7 @@ export default function Dashboard({
                 onClick={() => setSosOpen(true)}
                 className="flex min-h-12 items-center gap-2 rounded-xl border-0 bg-red-700 px-3 text-lg font-bold whitespace-nowrap text-white"
               >
-                <Siren size={22} /> {TEXT.sos[lang]}
+                <Siren size="1.375rem" /> {TEXT.sos[lang]}
               </motion.button>
             </div>
           </div>
@@ -687,7 +687,7 @@ export default function Dashboard({
               onClick={onBank}
               className="flex min-h-36 flex-col items-start justify-center gap-1 rounded-3xl border-0 bg-gradient-to-br from-mz-dark to-mz-green p-5 text-left text-white"
             >
-              <Landmark size={32} className="text-mz-gold" />
+              <Landmark size="2rem" className="text-mz-gold" />
               <strong className="text-xl">{UI.bankBox[lang]}</strong>
               <span className="text-lg">{UI.bankBoxLead[lang]}</span>
             </motion.button>
@@ -715,7 +715,7 @@ export default function Dashboard({
                 onClick={() => onFeature(key)}
                 className="flex min-h-44 flex-col items-center justify-center gap-1 rounded-2xl border border-stone-300 bg-white p-3 text-center text-lg font-semibold"
               >
-                <FeatureIcon size={30} className={key === 'scam' ? 'text-red-700' : 'text-emerald-800'} />
+                <FeatureIcon size="1.875rem" className={key === 'scam' ? 'text-red-700' : 'text-emerald-800'} />
                 {label[lang]}
                 <span className="text-base leading-snug font-normal text-stone-600">{UI.featureHelp[key][lang]}</span>
               </motion.button>
