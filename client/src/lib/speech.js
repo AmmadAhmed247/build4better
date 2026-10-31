@@ -1,3 +1,4 @@
+import { apiUrl } from './api.js'
 import { audioName } from './audioName.js'
 
 const synth = typeof window !== 'undefined' ? window.speechSynthesis : null
@@ -117,7 +118,7 @@ export function speak(line, lang, onDone) {
     play(`/audio/${audioName(voice, text)}.mp3`)
     return
   }
-  fetch('/api/speak', {
+  fetch(apiUrl('/api/speak'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ voice, text }),

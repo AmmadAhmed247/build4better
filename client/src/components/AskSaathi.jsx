@@ -2,6 +2,7 @@ import { X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { AvatarFace, useSpeaking } from './Avatar'
 import { LESSONS, UI } from '../data/content'
+import { apiUrl } from '../lib/api'
 import { containsSecret, localAnswer, SECRET_WARNING } from '../lib/localCheck'
 import { speak } from '../lib/speech'
 
@@ -102,7 +103,7 @@ export default function AskSaathi({ lang, hidden, onOpenLesson }) {
   const fileRef = useRef(null)
 
   useEffect(() => {
-    fetch('/api/health')
+    fetch(apiUrl('/api/health'))
       .then((response) => response.json())
       .then((health) => setOnline(health.ai))
       .catch(() => setOnline(false))
@@ -120,7 +121,7 @@ export default function AskSaathi({ lang, hidden, onOpenLesson }) {
   }
 
   async function fetchAnswer(message, attachment, history) {
-    const response = await fetch('/api/ask', {
+    const response = await fetch(apiUrl('/api/ask'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
